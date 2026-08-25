@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presentation: AI-Powered Automatic Block Planning System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #090d16;
+      color: #f1f5f9;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .slide {
+      display: none;
+      min-height: 85vh;
+    }
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body class="p-6 md:p-10 flex flex-col justify-between min-h-screen">
+
+  <!-- Top Navigation Header -->
+  <header class="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-bold text-lg">
+        <i class="fa-solid fa-train"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold text-white tracking-wide">INDIAN RAILWAYS • UNIVERSITY LECTURE PRESENTATION</h1>
+        <p class="text-xs text-slate-400">AI-Powered Automatic Block Planning System Architecture</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <span id="slide-num" class="text-xs font-bold px-3 py-1 bg-slate-900 rounded-lg border border-slate-800 text-amber-400">
+        Slide 1 / 10
+      </span>
+      <button onclick="prevSlide()" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button onclick="nextSlide()" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Slide Content Container -->
+  <main class="py-8 flex-1">
+
+    <!-- SLIDE 1: Cover -->
+    <div class="slide active" id="slide-1">
+      <div class="max-w-4xl">
+        <span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold inline-block mb-4">
+          <i class="fa-solid fa-graduation-cap mr-1"></i> Student Explanation Deck
+        </span>
+        <h2 class="text-3xl md:text-5xl font-extrabold text-white leading-tight mb-4">
+          AI-Powered Automatic Block Planning System
+        </h2>
+        <p class="text-lg text-slate-300 mb-8 leading-relaxed">
+          Solving multi-department infrastructure maintenance scheduling on Indian Railways using AI task criticality algorithms, mixed-integer optimization, and interactive time-space visual tools.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <span class="text-slate-500 block mb-1 font-semibold uppercase">Target Audience</span>
+            <span class="text-slate-200 font-bold text-sm">Computer Science & Engineering University Students</span>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <span class="text-slate-500 block mb-1 font-semibold uppercase">Core Domain</span>
+            <span class="text-slate-200 font-bold text-sm">Artificial Intelligence, Operations Research & System Design</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-amber-950/30 border border-amber-500/30 text-xs text-amber-200 mt-6">
+        <i class="fa-solid fa-chalkboard-user mr-2"></i> <strong>Speaker Guide:</strong> "Welcome everyone! Today we analyze how AI solves a real-world transport engineering problem: balancing continuous train movement with safe infrastructure repairs across track, signal, and overhead electric wires."
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Real World Problem -->
+    <div class="slide" id="slide-2">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">1. The Problem: Uncoordinated Departmental Silos</h2>
+        <p class="text-xs text-slate-400 mb-6">How railway maintenance is traditionally planned without AI integration</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+          <div class="p-5 rounded-2xl bg-red-950/20 border border-red-500/30">
+            <h3 class="font-bold text-red-400 text-sm mb-3"><i class="fa-solid fa-building-user mr-2"></i> 3 Separate Department Requests</h3>
+            <ul class="space-y-3 text-slate-300">
+              <li class="flex items-start gap-2">
+                <span class="text-blue-400 font-bold">•</span>
+                <div><strong>Civil Track (TMS):</strong> Requests 2.5 hours track blockage for rail relaying.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-purple-400 font-bold">•</span>
+                <div><strong>Electrical TRD (TDMS):</strong> Requests 2.0 hours power block for OHE wire check.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-400 font-bold">•</span>
+                <div><strong>Signal S&T (SMMS):</strong> Requests 1.5 hours disconnection for point machines.</div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <h3 class="font-bold text-amber-400 text-sm mb-3"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Operational Consequences</h3>
+            <ul class="space-y-3 text-slate-300">
+              <li class="flex items-start gap-2">
+                <span class="text-red-400 font-bold">❌</span>
+                <div><strong>Fragmented Track Closure:</strong> 3 separate line blockages on the same corridor section per day.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-red-400 font-bold">❌</span>
+                <div><strong>6.0 Hours Total Downtime:</strong> Track rendered unusable for passenger & freight trains.</div>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-red-400 font-bold">❌</span>
+                <div><strong>Frequent Delays:</b> Major passenger train slow-downs and goods train stagnation.</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900 border border-blue-500/30 text-xs text-slate-300 mt-6">
+        <i class="fa-solid fa-lightbulb text-amber-400 mr-2"></i> <strong>Student Key Lesson:</strong> In enterprise engineering, system failures often occur not because individual teams are incompetent, but because data is siloed without unified optimization algorithms.
+      </div>
+    </div>
+
+    <!-- SLIDE 3: Data Integration -->
+    <div class="slide" id="slide-3">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">2. Data Integration & Normalization API</h2>
+        <p class="text-xs text-slate-400 mb-6">Connecting isolated legacy databases into a unified real-time data bus</p>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-900 text-slate-400 font-semibold border-b border-slate-800">
+                <th class="p-3">Source System</th>
+                <th class="p-3">Department</th>
+                <th class="p-3">Data Ingested</th>
+                <th class="p-3">Role in Optimization Engine</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300">
+              <tr>
+                <td class="p-3 font-bold text-blue-400">TMS</td>
+                <td class="p-3">Civil Engineering</td>
+                <td class="p-3">Rail fractures (IMR), track geometry faults</td>
+                <td class="p-3">Defect urgency & location KM markers</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-emerald-400">SMMS</td>
+                <td class="p-3">Signal & Telecom</td>
+                <td class="p-3">Point machine wear, axle counter calibration</td>
+                <td class="p-3">Interlocking dependency validation</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-purple-400">TDMS</td>
+                <td class="p-3">Electrical TRD</td>
+                <td class="p-3">25kV OHE wire sag, substation isolators</td>
+                <td class="p-3">Power block isolation trigger</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-amber-400">COA</td>
+                <td class="p-3">Control Office</td>
+                <td class="p-3">Train timetables, freight forecasts, delays</td>
+                <td class="p-3">Identifies low-density timetable gap windows</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-cyan-400">BDMS</td>
+                <td class="p-3">Division Control</td>
+                <td class="p-3">Block applications, multi-dept sanctions</td>
+                <td class="p-3">Final slot dispatch & authorization</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900 border border-blue-500/30 text-xs text-slate-300 mt-6">
+        <i class="fa-solid fa-code text-cyan-400 mr-2"></i> <strong>Software Concept:</strong> In TypeScript, all disparate API payloads are normalized into a clean interface contract: <code>MaintenanceTask { sectionId, startKm, endKm, estimatedDurationHours, severity }</code>.
+      </div>
+    </div>
+
+    <!-- SLIDE 4: Task Criticality Index -->
+    <div class="slide" id="slide-4">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">3. AI Task Criticality Index (TCI) Algorithm</h2>
+        <p class="text-xs text-slate-400 mb-6">Weighted scoring function for prioritizing thousands of maintenance alerts</p>
+
+        <div class="p-5 rounded-2xl bg-amber-950/20 border border-amber-500/30 mb-6 text-center font-mono text-amber-300 text-sm md:text-base font-bold">
+          TCI = w₁ · Severity + w₂ · OverdueDays + w₃ · SpeedImpact + w₄ · PowerFactor
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <h4 class="font-bold text-amber-400 mb-2">Weight Factors Breakdown</h4>
+            <ul class="space-y-2 text-slate-300">
+              <li>• <strong>Severity (w₁):</strong> CRITICAL (45 pts), HIGH (35 pts), MEDIUM (25 pts).</li>
+              <li>• <strong>Overdue Days (w₂):</strong> 3.5 pts per day overdue (max 30 pts).</li>
+              <li>• <strong>Speed Restriction (w₃):</strong> 0.4 pts per km/h speed reduction avoided.</li>
+              <li>• <strong>Power Factor (w₄):</strong> +5 pts if 25kV OHE power block required.</li>
+            </ul>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <h4 class="font-bold text-emerald-400 mb-2">Practical Benefits</h4>
+            <ul class="space-y-2 text-slate-300">
+              <li>• <strong>Safety Priority:</strong> High-risk rail fractures (TCI > 90) get immediate block scheduling.</li>
+              <li>• <strong>Line Speed Restoration:</strong> Eliminates temporary speed restrictions (TSR) slowing trains.</li>
+              <li>• <strong>Algorithmic Objectivity:</strong> Prevents department bias in scheduling.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900 border border-blue-500/30 text-xs text-slate-300 mt-6">
+        <i class="fa-solid fa-calculator text-amber-400 mr-2"></i> <strong>Student Key Lesson:</strong> This is a classic multi-criteria decision making (MCDM) heuristic model used in Artificial Intelligence to evaluate risk dynamically.
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Shadow Blocking Innovation -->
+    <div class="slide" id="slide-5">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">4. Core Innovation: Multi-Department Shadow Blocking</h2>
+        <p class="text-xs text-slate-400 mb-6">Co-locating Engineering, TRD, and S&T work into a single track closure window</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+          <div class="p-5 rounded-2xl bg-slate-950 border border-red-500/30">
+            <div class="font-bold text-red-400 text-sm mb-3 flex items-center justify-between">
+              <span>BEFORE AI (MANUAL)</span>
+              <span class="bg-red-500/10 px-2 py-0.5 rounded text-xs">6.0 Hours Downtime</span>
+            </div>
+            <div class="space-y-2">
+              <div class="p-2 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                1. Engineering Track Relay: 2.5 Hours (08:00 - 10:30)
+              </div>
+              <div class="p-2 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                2. TRD OHE Inspection: 2.0 Hours (12:00 - 14:00)
+              </div>
+              <div class="p-2 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                3. S&T Point Overhaul: 1.5 Hours (16:00 - 17:30)
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-950 border border-emerald-500/40">
+            <div class="font-bold text-emerald-400 text-sm mb-3 flex items-center justify-between">
+              <span>AFTER AI (SHADOW BLOCK)</span>
+              <span class="bg-emerald-500/10 px-2 py-0.5 rounded text-xs font-bold text-emerald-300">✨ 2.8 Hours Single Window</span>
+            </div>
+            <div class="p-3 rounded-xl bg-gradient-to-r from-emerald-950/60 to-teal-950/60 border border-emerald-500/40 space-y-2">
+              <div class="font-bold text-white">Co-Located Window (11:30 - 14:18)</div>
+              <div class="grid grid-cols-3 gap-2 text-[10px]">
+                <div class="p-1.5 rounded bg-slate-900 border border-blue-500/30 text-blue-300 font-bold">Civil (TMS)</div>
+                <div class="p-1.5 rounded bg-slate-900 border border-purple-500/30 text-purple-300 font-bold">TRD (OHE)</div>
+                <div class="p-1.5 rounded bg-slate-900 border border-emerald-500/30 text-emerald-300 font-bold">S&T (SMMS)</div>
+              </div>
+              <div class="text-emerald-300 font-bold text-xs pt-1">
+                ✔ 3.2 Hours Downtime Saved (-53% reduction!)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 text-xs text-slate-300 mt-6">
+        <i class="fa-solid fa-arrows-split-up-and-left text-emerald-400 mr-2"></i> <strong>Analogy for Students:</strong> Think of Shadow Blocking like thread parallelization in an operating system! Instead of 3 sequential blocking locks, we execute non-interfering tasks concurrently in a single resource lock.
+      </div>
+    </div>
+
+    <!-- SLIDE 6: Optimization Math -->
+    <div class="slide" id="slide-6">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">5. Optimization Math & Physical Constraints</h2>
+        <p class="text-xs text-slate-400 mb-6">Formulating track block scheduling as a Mixed-Integer Linear Program (MILP)</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+          <div class="p-5 rounded-2xl bg-slate-900 border border-purple-500/30">
+            <h4 class="font-bold text-purple-300 text-sm mb-2">Objective Cost Function</h4>
+            <p class="font-mono text-purple-200 bg-slate-950 p-3 rounded-lg border border-slate-800 mb-3">
+              min ( α·TrainDelays + β·UnmetPriority + γ·Downtime - δ·ShadowSavings )
+            </p>
+            <ul class="space-y-2 text-slate-300">
+              <li>• <strong>TrainDelays:</strong> Total passenger/freight delay hours created.</li>
+              <li>• <strong>UnmetPriority:</strong> Penalty for delaying high-TCI critical tasks.</li>
+              <li>• <strong>Downtime:</strong> Total track closure duration.</li>
+              <li>• <strong>ShadowSavings:</strong> Reward multiplier for co-locating tasks.</li>
+            </ul>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <h4 class="font-bold text-amber-400 text-sm mb-2">Hard Constraints</h4>
+            <ul class="space-y-2.5 text-slate-300">
+              <li>1. <strong>Spatial Proximity:</strong> Task overlap distance <code>|Km_A - Km_B| ≤ 8 KM</code>.</li>
+              <li>2. <strong>Safety Headway:</strong> Minimum 500m separation between heavy machinery and human workers.</li>
+              <li>3. <strong>Power Isolation:</strong> 25kV OHE power block must cover full geographical bounds of TRD work.</li>
+              <li>4. <strong>Timetable Protection:</strong> Zero interference with High-Priority Express trains (Vande Bharat / Rajdhani).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900 border border-blue-500/30 text-xs text-slate-300 mt-6">
+        <i class="fa-solid fa-square-root-variable text-purple-400 mr-2"></i> <strong>Student Key Lesson:</strong> This is Operations Research (OR) in practice! Algorithms like Branch-and-Bound and Constraint Satisfaction Solvers resolve these NP-hard scheduling problems.
+      </div>
+    </div>
+
+    <!-- SLIDE 7: Tech Stack -->
+    <div class="slide" id="slide-7">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">6. Modern Web Software Architecture</h2>
+        <p class="text-xs text-slate-400 mb-6">High-performance tech stack powering the interactive operator dashboard</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+          <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <h4 class="font-bold text-cyan-400 text-sm mb-3"><i class="fa-solid fa-layer-group mr-2"></i> Technology Stack</h4>
+            <ul class="space-y-2.5 text-slate-300">
+              <li>• <strong>Framework:</strong> Next.js 16 (React 19, Turbopack)</li>
+              <li>• <b>Styling:</b> Tailwind CSS with Glassmorphism Dark Theme</li>
+              <li>• <strong>Language:</strong> TypeScript (Strict Data Contracts)</li>
+              <li>• <strong>Icons:</strong> Lucide React Vector Icons</li>
+              <li>• <strong>Deployment:</strong> Vercel / On-Premise Docker Container</li>
+            </ul>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <h4 class="font-bold text-emerald-400 text-sm mb-3"><i class="fa-solid fa-desktop mr-2"></i> Key UI Components</h4>
+            <ul class="space-y-2.5 text-slate-300">
+              <li>1. <strong>Time-Space Gantt Planner:</strong> Renders diagonal train vectors vs maintenance block rectangles.</li>
+              <li>2. <strong>Corridor Track Visualizer:</strong> Linear asset diagram with station nodes and section deep-dives.</li>
+              <li>3. <strong>BDMS Sanction Portal:</b> Single-window multi-department digital approval workflow.</li>
+              <li>4. <strong>Live Ingestion Monitor:</strong> Real-time API sync health dashboard.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900 border border-blue-500/30 text-xs text-slate-300 mt-6">
+        <i class="fa-solid fa-laptop-code text-cyan-400 mr-2"></i> <strong>Software Insight:</strong> Notice how complex mathematical algorithms are presented cleanly to human operators through intuitive visual components.
+      </div>
+    </div>
+
+    <!-- SLIDE 8: Multi-Horizon -->
+    <div class="slide" id="slide-8">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">7. Multi-Horizon Planning Framework</h2>
+        <p class="text-xs text-slate-400 mb-6">Balancing strategic long-term overhauls with real-time train disruption management</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <div class="text-amber-400 font-bold text-sm mb-1">1. Daily Dynamic</div>
+            <div class="text-[10px] text-slate-400 mb-3">0 to 24 Hours Horizon</div>
+            <p class="text-slate-300">Real-time adjustment reacting to train delays, unexpected freight train insertions from COA, or sudden emergency track defects.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900 border border-amber-500/40">
+            <div class="text-amber-400 font-bold text-sm mb-1">2. Weekly Tactical</div>
+            <div class="text-[10px] text-slate-400 mb-3">7 Days Horizon (Default)</div>
+            <p class="text-slate-300">Automated slot allocation and combined Shadow Block generation submitted directly to BDMS for multi-department sanction.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <div class="text-amber-400 font-bold text-sm mb-1">3. Monthly Macro</div>
+            <div class="text-[10px] text-slate-400 mb-3">30 Days Horizon</div>
+            <p class="text-slate-300">Strategic forecasting for major corridor track renewal, ballast cleaning machine (BCM) routing, and seasonal OHE overhaul.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900 border border-blue-500/30 text-xs text-slate-300 mt-6">
+        <i class="fa-solid fa-clock-rotate-left text-amber-400 mr-2"></i> <strong>Software Concept:</strong> Multi-horizon architecture ensures the software handles macro strategic planning without losing micro real-time responsiveness.
+      </div>
+    </div>
+
+    <!-- SLIDE 9: Results -->
+    <div class="slide" id="slide-9">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">8. Operational Results & Impact Summary</h2>
+        <p class="text-xs text-slate-400 mb-6">Empirical metric achievements across the 440 KM Delhi-Kanpur corridor</p>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div class="p-5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30">
+            <div class="text-3xl font-extrabold text-emerald-400 mb-1">98.8%</div>
+            <div class="text-xs font-bold text-white mb-1">Corridor Uptime</div>
+            <div class="text-[10px] text-slate-400">+3.4% increase over manual</div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-amber-950/30 border border-amber-500/30">
+            <div class="text-3xl font-extrabold text-amber-400 mb-1">11.1 hrs</div>
+            <div class="text-xs font-bold text-white mb-1">Weekly Time Saved</div>
+            <div class="text-[10px] text-slate-400">Downtime cut from 21h to 9.9h</div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-cyan-950/30 border border-cyan-500/30">
+            <div class="text-3xl font-extrabold text-cyan-400 mb-1">52.9%</div>
+            <div class="text-xs font-bold text-white mb-1">Shadow Efficiency</div>
+            <div class="text-[10px] text-slate-400">Multi-dept co-location rate</div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-purple-950/30 border border-purple-500/30">
+            <div class="text-3xl font-extrabold text-purple-400 mb-1">360+ m</div>
+            <div class="text-xs font-bold text-white mb-1">Train Delays Avoided</div>
+            <div class="text-[10px] text-slate-400">Cumulative train delay saved</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 text-xs text-slate-300 mt-6">
+        <i class="fa-solid fa-chart-line text-emerald-400 mr-2"></i> <strong>Student Key Lesson:</strong> Engineering projects are validated by concrete empirical KPIs. Software success is defined by user feedback and quantitative operational gains.
+      </div>
+    </div>
+
+    <!-- SLIDE 10: Conclusion -->
+    <div class="slide" id="slide-10">
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">9. Conclusion & Q&A</h2>
+        <p class="text-xs text-slate-400 mb-6">Summary of software innovations for university engineering students</p>
+
+        <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-xs space-y-3 mb-6">
+          <h4 class="font-bold text-amber-400 text-sm">Key Takeaways Summary</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-300">
+            <div>✔ <strong>Data Integration:</strong> Unifying legacy systems (TMS, SMMS, TDMS, COA) eliminates information silos.</div>
+            <div>✔ <strong>Shadow Blocking AI:</strong> Co-locating maintenance tasks yields massive 53% track downtime savings.</div>
+            <div>✔ <strong>Constraint Solvers:</strong> Operations Research algorithms ensure physical safety and train schedule protection.</div>
+            <div>✔ <strong>Modern Web Stack:</strong> Next.js 16 + TypeScript delivers real-time time-space visualizer dashboards.</div>
+          </div>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 text-center font-bold">
+          <div class="text-lg">💬 Questions & Discussion</div>
+          <div class="text-xs opacity-90 mt-1">Live Software Demo available locally at http://localhost:3000/</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Slide Navigation Footer -->
+  <footer class="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+    <div>Indian Railways Technical Innovation Initiative</div>
+    <div>Use Arrow Keys or Navigation Buttons</div>
+  </footer>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 10;
+
+    function showSlide(n) {
+      document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+      const active = document.getElementById(`slide-${n}`);
+      if (active) active.classList.add('active');
+      document.getElementById('slide-num').innerText = `Slide ${n} / ${totalSlides}`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        showSlide(currentSlide);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        showSlide(currentSlide);
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+  </script>
+</body>
+</html>
