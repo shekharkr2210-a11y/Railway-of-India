@@ -108,23 +108,23 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 text-slate-100">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 text-gray-900">
       {/* Scope & Role Bar */}
-      <div className="px-6 py-2 bg-slate-900/90 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="px-6 py-2 bg-gray-50/90 border-b border-gray-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
         {/* Scope Level Selector */}
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 font-medium flex items-center gap-1">
+          <span className="text-gray-500 font-medium flex items-center gap-1">
             <Globe className="w-3.5 h-3.5 text-amber-400" />
             Network Scope:
           </span>
 
-          <div className="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center gap-1">
+          <div className="bg-white p-1 rounded-xl border border-gray-200 flex items-center gap-1">
             <button
               onClick={() => handleScopeButtonClick('NATIONAL')}
               className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
                 scopeLevel === 'NATIONAL'
                   ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-gray-500 hover:text-gray-800'
               }`}
             >
               🇮🇳 National (All India)
@@ -134,7 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
                 scopeLevel === 'ZONE'
                   ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-gray-500 hover:text-gray-800'
               }`}
             >
               Zonal Railway
@@ -144,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
                 scopeLevel === 'DIVISION'
                   ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-gray-500 hover:text-gray-800'
               }`}
             >
               Division
@@ -156,7 +156,7 @@ export const Header: React.FC<HeaderProps> = ({
             <select
               value={selectedZone}
               onChange={e => handleZoneSelect(e.target.value)}
-              className="bg-slate-950 border border-amber-500/40 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none focus:border-amber-500 font-semibold shadow-sm shadow-amber-500/10"
+              className="bg-white border border-gray-300 rounded-lg px-2.5 py-1 text-gray-800 focus:outline-none focus:border-amber-500 font-semibold shadow-sm shadow-amber-500/10"
             >
               <option value="ALL">All 18 Zones</option>
               {zones.map(z => (
@@ -172,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
             <select
               value={selectedDivision}
               onChange={e => handleDivisionSelect(e.target.value)}
-              className="bg-slate-950 border border-emerald-500/40 rounded-lg px-2.5 py-1 text-emerald-300 font-semibold focus:outline-none focus:border-emerald-500 shadow-sm shadow-emerald-500/10"
+              className="bg-white border border-gray-300 rounded-lg px-2.5 py-1 text-emerald-700 font-semibold focus:outline-none focus:border-emerald-500 shadow-sm shadow-emerald-500/10"
             >
               <option value="ALL">All Divisions</option>
               {availableDivisions.map(d => (
@@ -186,20 +186,20 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* User Persona Switcher & Security Status */}
         <div className="flex items-center gap-3">
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-            <Lock className="w-3 h-3 text-emerald-400" />
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center gap-1">
+            <Lock className="w-3 h-3 text-emerald-600" />
             TLS 1.3 mTLS Secured
           </span>
 
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-medium flex items-center gap-1">
-              <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-gray-500 font-medium flex items-center gap-1">
+              <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
               Persona Role:
             </span>
             <select
               value={userRole}
               onChange={e => setUserRole(e.target.value as UserRole)}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
+              className="bg-white border border-gray-300 rounded-lg px-2.5 py-1 text-emerald-700 font-bold focus:outline-none focus:border-emerald-500"
             >
               <option value="BOARD_HQ">Railway Board HQ Director</option>
               <option value="ZONAL_GM">Zonal General Manager (GM)</option>
@@ -211,14 +211,14 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Branding Header */}
-      <div className="px-6 py-3 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/60">
+      <div className="px-6 py-3 flex flex-wrap items-center justify-between gap-4 border-b border-gray-200/60">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-orange-600 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-            <Train className="w-6 h-6 text-white" />
+            <Train className="w-6 h-6 text-gray-900" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+              <h1 className="text-lg font-bold tracking-tight text-gray-900">
                 INDIAN RAILWAYS • NATIONAL AI BLOCK PLANNER
               </h1>
               <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
@@ -226,7 +226,7 @@ export const Header: React.FC<HeaderProps> = ({
                 Hardened & Encrypted
               </span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-gray-500">
               Multi-Zone Enterprise Block Optimization • Scope:{' '}
               <span className="text-amber-400 font-semibold">
                 {scopeLevel === 'NATIONAL' ? 'ALL INDIA (18 ZONES)' : scopeLevel === 'ZONE' ? `ZONE: ${selectedZone}` : `DIVISION: ${selectedDivision}`}
@@ -238,13 +238,13 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Right Controls */}
         <div className="flex items-center gap-3">
           {/* Horizon Selector */}
-          <div className="bg-slate-900/90 p-1 rounded-xl border border-slate-800 flex items-center gap-1">
+          <div className="bg-gray-50/90 p-1 rounded-xl border border-gray-200 flex items-center gap-1">
             <button
               onClick={() => setHorizon('DAILY')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 horizon === 'DAILY'
                   ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'
               }`}
             >
               Daily Dynamic
@@ -254,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 horizon === 'WEEKLY'
                   ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'
               }`}
             >
               Weekly Tactical
@@ -264,7 +264,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 horizon === 'MONTHLY'
                   ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'
               }`}
             >
               Monthly Macro
@@ -293,13 +293,13 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="px-6 flex items-center gap-2 overflow-x-auto text-xs font-medium border-t border-slate-800/40 py-2">
+      <div className="px-6 flex items-center gap-2 overflow-x-auto text-xs font-medium border-t border-gray-200/40 py-2">
         <button
           onClick={() => setActiveTab('NATIONAL')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'NATIONAL'
-              ? 'bg-slate-800 text-amber-400 font-semibold border border-amber-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
           }`}
         >
           <Globe className="w-3.5 h-3.5 text-amber-400" />
@@ -310,8 +310,8 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => setActiveTab('OVERVIEW')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'OVERVIEW'
-              ? 'bg-slate-800 text-amber-400 font-semibold border border-amber-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
           }`}
         >
           <Activity className="w-3.5 h-3.5" />
@@ -322,8 +322,8 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => setActiveTab('GANTT')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'GANTT'
-              ? 'bg-slate-800 text-amber-400 font-semibold border border-amber-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
           }`}
         >
           <Calendar className="w-3.5 h-3.5" />
@@ -334,8 +334,8 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => setActiveTab('CORRIDOR')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'CORRIDOR'
-              ? 'bg-slate-800 text-amber-400 font-semibold border border-amber-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
@@ -346,8 +346,8 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => setActiveTab('TASKS')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'TASKS'
-              ? 'bg-slate-800 text-amber-400 font-semibold border border-amber-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
           }`}
         >
           <ShieldAlert className="w-3.5 h-3.5" />
@@ -358,8 +358,8 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => setActiveTab('BDMS')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'BDMS'
-              ? 'bg-slate-800 text-amber-400 font-semibold border border-amber-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
           }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -370,8 +370,8 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => setActiveTab('SECURITY')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'SECURITY'
-              ? 'bg-slate-800 text-emerald-400 font-semibold border border-emerald-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-emerald-50 text-emerald-700 font-semibold border border-emerald-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -382,8 +382,8 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => setActiveTab('INGESTION')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'INGESTION'
-              ? 'bg-slate-800 text-amber-400 font-semibold border border-amber-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
           }`}
         >
           <RefreshCw className="w-3.5 h-3.5" />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { NationalOverview } from './components/NationalOverview';
 import { MetricsOverview } from './components/MetricsOverview';
@@ -38,7 +38,7 @@ export default function Home() {
 
   // Security Audit Log State
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(INITIAL_AUDIT_LOGS);
-  const [securityStatus, setSecurityStatus] = useState(INITIAL_SECURITY_STATUS);
+  const [securityStatus] = useState(INITIAL_SECURITY_STATUS);
 
   const [tasks, setTasks] = useState<MaintenanceTask[]>(INITIAL_MAINTENANCE_TASKS);
   const [blocks, setBlocks] = useState<BlockWindow[]>([]);
@@ -59,12 +59,7 @@ export default function Home() {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Run AI Optimization on Mount or Scope Change via Backend REST API
-  useEffect(() => {
-    runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, tasks);
-  }, [horizon, scopeLevel, selectedZone, selectedDivision]);
-
-  const runOptimization = async (
+  const runOptimization = useCallback(async (
     currentHorizon: 'DAILY' | 'WEEKLY' | 'MONTHLY',
     currentScope: ScopeLevel,
     currentZone: string,
@@ -95,7 +90,7 @@ export default function Home() {
         };
         setAuditLogs(prev => [newLog, ...prev]);
 
-        setToastMessage(`✨ Backend API /api/optimize executed across ${scopeLabel}. Saved ${response.metrics.downtimeHoursSaved} hrs track downtime!`);
+        setToastMessage(`✨ AI Optimizer scheduled ${response.blocks.length} blocks (${currentHorizon}) for ${scopeLabel}. Saved ${response.metrics.downtimeHoursSaved} hrs downtime!`);
       }
     } catch {
       // Fallback local optimization if offline
@@ -106,7 +101,12 @@ export default function Home() {
       setIsOptimizing(false);
       setTimeout(() => setToastMessage(null), 5000);
     }
-  };
+  }, [userRole]);
+
+  // Run AI Optimization on Mount or Scope Change
+  useEffect(() => {
+    runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, tasks);
+  }, [horizon, scopeLevel, selectedZone, selectedDivision, runOptimization, tasks]);
 
   const handleManualOptimize = () => {
     runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, tasks);
@@ -124,6 +124,13 @@ export default function Home() {
     });
     setTasks(updated);
     runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, updated);
+  };
+
+  const handleTasksImported = (newTasks: MaintenanceTask[]) => {
+    const combined = [...newTasks, ...tasks];
+    setTasks(combined);
+    runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, combined);
+    setToastMessage(`📥 Ingested ${newTasks.length} external defects from CRIS Data Bus! Re-optimizing...`);
   };
 
   const handleApproveBlock = async (blockId: string) => {
@@ -185,7 +192,7 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950 flex flex-col">
+    <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-500 selection:text-white flex flex-col">
       {/* Top Header */}
       <Header
         horizon={horizon}
@@ -208,8 +215,8 @@ export default function Home() {
 
       {/* Floating Notification Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-amber-500/40 text-amber-300 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-xl flex items-center gap-3 animate-bounce">
-          <Sparkles className="w-5 h-5 text-amber-400" />
+        <div className="fixed bottom-6 right-6 z-50 bg-white border border-amber-200 text-gray-900 px-4 py-3 rounded-2xl shadow-lg flex items-center gap-3 animate-bounce">
+          <Sparkles className="w-5 h-5 text-amber-500" />
           <span className="text-xs font-semibold">{toastMessage}</span>
         </div>
       )}
@@ -232,14 +239,14 @@ export default function Home() {
               userRole={userRole}
             />
             <MetricsOverview metrics={metrics} />
-            <ShadowBlockShowcase />
+            <ShadowBlockShowcase blocks={blocks} />
           </div>
         )}
 
         {activeTab === 'OVERVIEW' && (
           <div>
             <MetricsOverview metrics={metrics} />
-            <ShadowBlockShowcase />
+            <ShadowBlockShowcase blocks={blocks} />
             <CorridorMap
               sections={filteredSections}
               tasks={filteredTasks}
@@ -253,6 +260,7 @@ export default function Home() {
               blocks={blocks}
               trains={INITIAL_TRAIN_MOVEMENTS}
               tasks={filteredTasks}
+              horizon={horizon}
             />
           </div>
         )}
@@ -264,6 +272,7 @@ export default function Home() {
               blocks={blocks}
               trains={INITIAL_TRAIN_MOVEMENTS}
               tasks={filteredTasks}
+              horizon={horizon}
             />
           </div>
         )}
@@ -311,17 +320,17 @@ export default function Home() {
 
         {activeTab === 'INGESTION' && (
           <div>
-            <DataIngestionPanel />
+            <DataIngestionPanel onTasksImported={handleTasksImported} />
           </div>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 px-6 text-center text-xs text-slate-400 flex flex-wrap justify-between items-center gap-4">
+      <footer className="border-t border-gray-200 bg-gray-50 py-4 px-6 text-center text-xs text-gray-500 flex flex-wrap justify-between items-center gap-4">
         <div>
           🇮🇳 Indian Railways Enterprise AI Automatic Block Planning System • Full-Stack Backend Connected (REST API + TLS 1.3)
         </div>
-        <div className="text-emerald-400 font-mono">
+        <div className="text-emerald-500 font-mono">
           API Status: 200 OK • Backend Route Handlers Online
         </div>
       </footer>

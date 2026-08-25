@@ -37,15 +37,15 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
   });
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl mb-6 shadow-xl">
+    <div className="bg-gray-100/80 border border-gray-200 rounded-2xl p-6 backdrop-blur-xl mb-6 shadow-xl">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-red-400" />
             TMS, SMMS & TDMS Maintenance Task Prioritization Queue
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-gray-500">
             AI Criticality Index (TCI) ranks defects based on safety risk, overdue days, and traffic speed impact
           </p>
         </div>
@@ -54,13 +54,13 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
         <div className="flex flex-wrap items-center gap-3 text-xs">
           {/* Search Box */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input
               type="text"
               placeholder="Search defect, section..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors w-48"
+              className="bg-white border border-gray-200 rounded-xl pl-9 pr-3 py-1.5 text-xs text-gray-900 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors w-48"
             />
           </div>
 
@@ -68,7 +68,7 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
           <select
             value={selectedDept}
             onChange={e => setSelectedDept(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+            className="bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-amber-500"
           >
             <option value="ALL">All Departments</option>
             <option value="ENG">TMS - Track Engineering</option>
@@ -80,7 +80,7 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
           <select
             value={selectedSeverity}
             onChange={e => setSelectedSeverity(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+            className="bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-amber-500"
           >
             <option value="ALL">All Severities</option>
             <option value="CRITICAL">Critical Only</option>
@@ -91,10 +91,10 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
       </div>
 
       {/* Task Queue Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-slate-900/90 border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+            <tr className="bg-gray-50/90 border-b border-gray-200 text-gray-500 font-semibold uppercase tracking-wider text-[10px]">
               <th className="py-3 px-4">TCI Score</th>
               <th className="py-3 px-4">Source System</th>
               <th className="py-3 px-4">Task & Defect Description</th>
@@ -105,9 +105,9 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
               <th className="py-3 px-4 text-right">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60 text-slate-300">
+          <tbody className="divide-y divide-gray-200 text-gray-700">
             {filteredTasks.map(task => (
-              <tr key={task.id} className="hover:bg-slate-900/50 transition-colors group">
+              <tr key={task.id} className="hover:bg-gray-100/50 transition-colors group">
                 {/* TCI Score Badge */}
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-1.5">
@@ -136,7 +136,7 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
 
                 {/* Title & Speed Impact */}
                 <td className="py-3 px-4">
-                  <div className="font-bold text-white group-hover:text-amber-400 transition-colors">
+                  <div className="font-bold text-gray-900 group-hover:text-amber-400 transition-colors">
                     {task.title}
                   </div>
                   {task.speedRestrictionImpactKmvh > 0 && (
@@ -149,21 +149,21 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
 
                 {/* Corridor Section */}
                 <td className="py-3 px-4">
-                  <span className="font-semibold text-slate-200">{task.sectionName}</span>
-                  <div className="text-[10px] text-slate-400 font-mono">
+                  <span className="font-semibold text-gray-800">{task.sectionName}</span>
+                  <div className="text-[10px] text-gray-500 font-mono">
                     KM {task.startKm} - {task.endKm}
                   </div>
                 </td>
 
                 {/* Est Duration */}
-                <td className="py-3 px-4 font-mono font-semibold text-slate-200">
+                <td className="py-3 px-4 font-mono font-semibold text-gray-800">
                   {task.estimatedDurationHours} hrs
                 </td>
 
                 {/* Overdue Days */}
                 <td className="py-3 px-4">
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                    task.overdueDays >= 7 ? 'bg-red-500/20 text-red-300' : 'bg-slate-800 text-slate-400'
+                    task.overdueDays >= 7 ? 'bg-red-500/20 text-red-300' : 'bg-gray-100 text-gray-500'
                   }`}>
                     +{task.overdueDays} days
                   </span>
@@ -177,7 +177,7 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
                       25kV OHE
                     </span>
                   ) : (
-                    <span className="text-slate-500 text-[10px]">None</span>
+                    <span className="text-gray-400 text-[10px]">None</span>
                   )}
                 </td>
 

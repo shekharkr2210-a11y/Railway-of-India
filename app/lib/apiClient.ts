@@ -5,6 +5,7 @@ export interface OptimizationApiResponse {
   success: boolean;
   blocks: BlockWindow[];
   metrics: OptimizationMetrics;
+  recommendations?: string[];
   error?: string;
 }
 
@@ -13,6 +14,14 @@ export interface SanctionApiResponse {
   blockId: string;
   digitalSignature: string;
   status: string;
+  error?: string;
+}
+
+export interface ImportApiResponse {
+  success: boolean;
+  importedCount: number;
+  tasks: MaintenanceTask[];
+  message: string;
   error?: string;
 }
 
@@ -38,6 +47,17 @@ export async function ingestBackendTask(taskPayload: Partial<MaintenanceTask>) {
     body: JSON.stringify(taskPayload),
   });
   if (!res.ok) throw new Error('Failed to ingest task into backend');
+  return res.json();
+}
+
+// Batch Import Tasks to Backend API
+export async function batchImportTasks(tasks: Partial<MaintenanceTask>[]): Promise<ImportApiResponse> {
+  const res = await fetch('/api/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tasks }),
+  });
+  if (!res.ok) throw new Error('Failed to import tasks batch');
   return res.json();
 }
 

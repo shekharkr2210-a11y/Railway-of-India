@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { INITIAL_MAINTENANCE_TASKS } from '@/app/lib/mockData';
+import { INITIAL_MAINTENANCE_TASKS, INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS } from '@/app/lib/mockData';
 import { generateOptimizedBlocks } from '@/app/lib/optimizer';
 import { ScopeLevel, MaintenanceTask } from '@/app/lib/types';
 import { sanitizeInput } from '@/app/lib/security';
@@ -16,8 +16,16 @@ export async function POST(request: NextRequest) {
       ? body.tasks
       : INITIAL_MAINTENANCE_TASKS;
 
-    // Run server-side optimization algorithm
-    const result = generateOptimizedBlocks(clientTasks, horizon, scope, zone, division);
+    // Run AI-powered server-side optimization algorithm with timetable constraints
+    const result = generateOptimizedBlocks(
+      clientTasks,
+      horizon,
+      scope,
+      zone,
+      division,
+      INITIAL_CORRIDOR_SECTIONS,
+      INITIAL_TRAIN_MOVEMENTS
+    );
 
     return NextResponse.json({
       success: true,
@@ -29,6 +37,7 @@ export async function POST(request: NextRequest) {
       blocksCount: result.blocks.length,
       blocks: result.blocks,
       metrics: result.metrics,
+      recommendations: result.recommendations,
     });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to execute AI optimization on server';

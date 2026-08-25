@@ -8,7 +8,7 @@ from reportlab.platypus import (
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 
-def create_presentation_pdf(filename="AI_Block_Planner_Presentation.pdf"):
+def create_hackathon_presentation_pdf(filename="AI_Block_Planner_Hackathon_Presentation.pdf"):
     # Page setup: Landscape Letter (11 x 8.5 inches = 792 x 612 pts)
     # Margins: 36 pt (0.5 inch) -> Printable width = 720 pt, printable height = 540 pt
     doc = SimpleDocTemplate(
@@ -511,4 +511,4 @@ def create_presentation_pdf(filename="AI_Block_Planner_Presentation.pdf"):
     print(f"PDF successfully generated: {filename}")
 
 if __name__ == "__main__":
-    create_presentation_pdf()
+    create_hackathon_presentation_pdf()
