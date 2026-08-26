@@ -205,3 +205,138 @@ export function generateAIRecommendations(
 
   return recommendations;
 }
+
+/**
+ * Explainable AI (XAI): Decomposes the TCI score into exact mathematical feature attributions.
+ * Used by inspectors, controllers, and DRMs to audit why a maintenance task was prioritized.
+ */
+export function explainTaskCriticality(
+  task: MaintenanceTask,
+  section?: CorridorSection
+): {
+  taskId: string;
+  taskTitle: string;
+  totalScore: number;
+  features: {
+    severityScore: number;
+    severityMax: number;
+    severityLabel: string;
+    overdueScore: number;
+    overdueMax: number;
+    overdueDays: number;
+    speedImpactScore: number;
+    speedImpactMax: number;
+    speedReductionKmph: number;
+    trafficDensityScore: number;
+    trafficDensityMax: number;
+    trafficDensityLevel: string;
+    powerBlockScore: number;
+    powerBlockMax: number;
+    requiresPowerBlock: boolean;
+  };
+  explanation: string;
+  riskFactorSummary: string;
+} {
+  const features = extractTaskFeatures(task, section);
+  const totalScore = calculateMLCriticality(task, section);
+
+  const severityScore = Math.round(features.severityWeight * 40 * 2.2);
+  const overdueScore = Math.round(features.overdueFactor * 25);
+  const speedImpactScore = Math.round(features.speedImpactFactor * 20);
+  const powerBlockScore = Math.round(features.powerBlockImpact * 5);
+  
+  const trafficMultiplier = features.trafficDensityMultiplier;
+  const trafficDensityScore = Math.round(((severityScore + overdueScore + speedImpactScore + powerBlockScore) * (trafficMultiplier - 1.0)));
+
+  const densityLevel = section?.trafficDensity || 'HIGH';
+  const speedKmph = task.speedRestrictionImpactKmvh || 0;
+
+  let explanation = `Task classified as ${task.severity} priority. `;
+  if (task.overdueDays > 0) {
+    explanation += `Overdue by ${task.overdueDays} days, triggering an exponential risk penalty of +${overdueScore} pts. `;
+  }
+  if (speedKmph > 0) {
+    explanation += `Causes a Temporary Speed Restriction of ${speedKmph} km/h, adding +${speedImpactScore} pts. `;
+  }
+  if (trafficMultiplier > 1.0) {
+    explanation += `Located on ${densityLevel} density trunk corridor (NDLS-HWH route), applying a ${(trafficMultiplier * 100 - 100).toFixed(0)}% traffic density boost (+${trafficDensityScore} pts). `;
+  }
+  if (task.requiresPowerBlock) {
+    explanation += `Requires 25kV OHE isolation power block (+${powerBlockScore} pts).`;
+  }
+
+  let riskFactorSummary = 'Standard Track Maintenance';
+  if (totalScore >= 85) {
+    riskFactorSummary = '🚨 Immediate Derailment / Signal Failure Risk — Must schedule within 24h';
+  } else if (totalScore >= 70) {
+    riskFactorSummary = '⚠️ High Line Capacity Bottleneck — Schedule in current weekly rolling plan';
+  } else if (totalScore >= 50) {
+    riskFactorSummary = '⏳ Preventive Cyclical Maintenance — Bundle into Shadow Block';
+  }
+
+  return {
+    taskId: task.id,
+    taskTitle: task.title,
+    totalScore,
+    features: {
+      severityScore,
+      severityMax: 45,
+      severityLabel: task.severity,
+      overdueScore,
+      overdueMax: 25,
+      overdueDays: task.overdueDays,
+      speedImpactScore,
+      speedImpactMax: 20,
+      speedReductionKmph: speedKmph,
+      trafficDensityScore,
+      trafficDensityMax: 20,
+      trafficDensityLevel: densityLevel,
+      powerBlockScore,
+      powerBlockMax: 5,
+      requiresPowerBlock: task.requiresPowerBlock,
+    },
+    explanation,
+    riskFactorSummary,
+  };
+}
+
+/**
+ * What-If Scenario Stress-Testing Engine.
+ * Modifies underlying feature vectors based on simulated weather, freight surges, and sensitivity thresholds.
+ */
+export function recalculateTasksWithWhatIf(
+  tasks: MaintenanceTask[],
+  scenario: {
+    monsoonWeatherFactor: number;
+    freightTrafficSurgePercentage: number;
+    speedRestrictionSensitivity: number;
+  },
+  sections: CorridorSection[] = []
+): MaintenanceTask[] {
+  return tasks.map(task => {
+    const matchedSection = sections.find(s => s.id === task.sectionId || s.name === task.sectionName);
+    
+    // Scale overdue and severity based on monsoon degradation
+    const simulatedOverdue = Math.round(task.overdueDays * scenario.monsoonWeatherFactor);
+    const speedImpactFactor = Math.min(1.0, (task.speedRestrictionImpactKmvh || 0) / Math.max(10, scenario.speedRestrictionSensitivity));
+    
+    let densityMultiplier = 1.0;
+    if (matchedSection) {
+      const baseDensity = matchedSection.trafficDensity === 'VERY_HIGH' ? 1.4 : matchedSection.trafficDensity === 'HIGH' ? 1.2 : 1.0;
+      densityMultiplier = baseDensity * (1 + scenario.freightTrafficSurgePercentage / 200);
+    }
+
+    const severityMap = { CRITICAL: 0.45, HIGH: 0.32, MEDIUM: 0.20, LOW: 0.12 };
+    const baseSev = severityMap[task.severity] || 0.2;
+    const overdueFactor = Math.min(1.0, 1 - Math.exp(-0.2 * simulatedOverdue));
+    const powerImpact = task.requiresPowerBlock ? 0.15 : 0.0;
+
+    const raw = (baseSev * 40 * 2.2) + (overdueFactor * 25 * scenario.monsoonWeatherFactor) + (speedImpactFactor * 20) + (powerImpact * 5);
+    const score = Math.min(Math.max(Math.round(raw * densityMultiplier), 10), 99);
+
+    return {
+      ...task,
+      criticalityScore: score,
+    };
+  });
+}

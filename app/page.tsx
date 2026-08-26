@@ -11,6 +11,7 @@ import { TaskPriorityTable } from './components/TaskPriorityTable';
 import { BDMSWorkflow } from './components/BDMSWorkflow';
 import { DataIngestionPanel } from './components/DataIngestionPanel';
 import { CyberSecurityPanel } from './components/CyberSecurityPanel';
+import { LoginPage } from './components/LoginPage';
 
 import { 
   ZONAL_RAILWAYS,
@@ -26,6 +27,8 @@ import { runServerOptimization, postBackendBdmsSanction } from './lib/apiClient'
 import { Sparkles } from 'lucide-react';
 
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<string>('');
   const [horizon, setHorizon] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [activeTab, setActiveTab] = useState<'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'BDMS' | 'INGESTION' | 'SECURITY'>('NATIONAL');
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
@@ -190,6 +193,16 @@ export default function Home() {
     if (scopeLevel === 'DIVISION' && selectedDivision !== 'ALL') return t.divisionCode === selectedDivision;
     return true;
   });
+  const handleLogin = (role: UserRole, username: string) => {
+    setUserRole(role);
+    setLoggedInUser(username);
+    setIsAuthenticated(true);
+  };
+
+  // Auth Gate: Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-500 selection:text-white flex flex-col">

@@ -129,6 +129,24 @@ export function generateOptimizedBlocks(
                            primaryTask.sectionName.includes('NDLS-FZB');
       if (isCrossZonal) crossZonalConflictsResolved++;
 
+      // Assign realistic track maintenance machines based on department tasks
+      const assignedMachines: string[] = [];
+      if (depts.includes('ENG')) {
+        const isHeavyTrackWork = cluster.some(t => t.title.toLowerCase().includes('renewal') || t.title.toLowerCase().includes('ballast') || t.title.toLowerCase().includes('weld') || t.title.toLowerCase().includes('fracture'));
+        if (isHeavyTrackWork) {
+          assignedMachines.push('BCM-04 (Ballast Cleaner)');
+          assignedMachines.push('CSM-12 (Tamping Machine)');
+        } else {
+          assignedMachines.push('USFD-02 (Ultrasonic Flaw Tester)');
+        }
+      }
+      if (depts.includes('TRD')) {
+        assignedMachines.push('TW-08 (8-Wheeler Tower Wagon)');
+      }
+      if (depts.includes('SMMS')) {
+        assignedMachines.push('SMMS Point Machine Calibration Rig');
+      }
+
       const block: BlockWindow = {
         id: `BLK-${primaryTask.zoneCode}-${blockCounter++}`,
         zoneCode: primaryTask.zoneCode,
@@ -147,6 +165,7 @@ export function generateOptimizedBlocks(
         trainImpactMinutes: trainImpact,
         horizon,
         crossZonalImpact: isCrossZonal,
+        assignedMachines: assignedMachines.length > 0 ? assignedMachines : ['Heavy Track Gang #14'],
       };
 
       generatedBlocks.push(block);

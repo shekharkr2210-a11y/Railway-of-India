@@ -6,6 +6,86 @@ export type ScopeLevel = 'NATIONAL' | 'ZONE' | 'DIVISION';
 
 export type UserRole = 'BOARD_HQ' | 'ZONAL_GM' | 'DIVISIONAL_DRM' | 'SECTION_CONTROLLER';
 
+export type TrackMachineType = 
+  | 'BCM_BALLAST_CLEANER' 
+  | 'CSM_TAMPING_MACHINE' 
+  | 'TW_TOWER_WAGON' 
+  | 'BRM_BALLAST_REGULATOR' 
+  | 'USFD_RAIL_TESTER' 
+  | 'MANUAL_CREW_GANG';
+
+export interface TCIFeatureBreakdown {
+  taskId: string;
+  taskTitle: string;
+  totalScore: number;
+  features: {
+    severityScore: number;
+    severityMax: number;
+    severityLabel: string;
+    overdueScore: number;
+    overdueMax: number;
+    overdueDays: number;
+    speedImpactScore: number;
+    speedImpactMax: number;
+    speedReductionKmph: number;
+    trafficDensityScore: number;
+    trafficDensityMax: number;
+    trafficDensityLevel: string;
+    powerBlockScore: number;
+    powerBlockMax: number;
+    requiresPowerBlock: boolean;
+  };
+  explanation: string;
+  riskFactorSummary: string;
+}
+
+export interface WhatIfScenario {
+  monsoonWeatherFactor: number;
+  freightTrafficSurgePercentage: number;
+  speedRestrictionSensitivity: number;
+  powerBlockBufferMinutes: number;
+}
+
+export interface JointBlockCircular {
+  circularNumber: string;
+  date: string;
+  zoneCode: string;
+  divisionCode: string;
+  sectionName: string;
+  blockWindowId: string;
+  startTime: string;
+  endTime: string;
+  durationHours: number;
+  trackKmRange: string;
+  participatingDepartments: {
+    dept: Department;
+    deptName: string;
+    officerInCharge: string;
+    tasksCount: number;
+    scope: string;
+  }[];
+  powerBlockDetails: {
+    required: boolean;
+    substationCode?: string;
+    feederIsolator?: string;
+    dischargeRodCrew?: string;
+  };
+  assignedMachines: {
+    machineCode: string;
+    machineName: string;
+    operatorCrew: string;
+  }[];
+  concurrenceSignatures: {
+    authority: string;
+    roleName: string;
+    status: 'CONCURRED' | 'SANCTIONED';
+    timestamp: string;
+    digitalSignature: string;
+  }[];
+  digitalSealHmac: string;
+  status: 'ACTIVE' | 'DRAFT';
+}
+
 export interface ZonalRailway {
   code: string;
   name: string;
@@ -40,10 +120,12 @@ export interface MaintenanceTask {
   estimatedDurationHours: number;
   severity: TaskSeverity;
   overdueDays: number;
-  requiresPowerBlock: boolean; // TRD isolation requirement
-  speedRestrictionImpactKmvh: number; // impact if delayed
-  criticalityScore: number; // Computed AI TCI score 0-100
+  requiresPowerBlock: boolean;
+  speedRestrictionImpactKmvh: number;
+  criticalityScore: number;
   assignedBlockId?: string;
+  assignedMachine?: string;
+  assignedMachineType?: TrackMachineType;
   status: 'PENDING' | 'SCHEDULED' | 'APPROVED' | 'IN_PROGRESS' | 'COMPLETED';
 }
 
@@ -53,13 +135,13 @@ export interface CorridorSection {
   code: string;
   zoneCode: string;
   divisionCode: string;
-  corridorName: string; // e.g. "Delhi - Mumbai Golden Corridor"
+  corridorName: string;
   startStation: string;
   endStation: string;
   lengthKm: number;
   startKm: number;
   endKm: number;
-  tracks: number; // e.g. 2 for Double Line
+  tracks: number;
   trafficDensity: 'VERY_HIGH' | 'HIGH' | 'MEDIUM';
   dailyTrainCount: number;
 }
@@ -72,9 +154,9 @@ export interface TrainMovement {
   sectionId: string;
   originZone: string;
   destinationZone: string;
-  entryTime: string; // HH:mm
-  exitTime: string; // HH:mm
-  priority: number; // 1 = highest (e.g. Vande Bharat / Rajdhani)
+  entryTime: string;
+  exitTime: string;
+  priority: number;
 }
 
 export interface BlockWindow {
@@ -83,8 +165,8 @@ export interface BlockWindow {
   divisionCode: string;
   sectionId: string;
   sectionName: string;
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm
+  startTime: string;
+  endTime: string;
   durationHours: number;
   isShadowBlock: boolean;
   participatingDepartments: Department[];
@@ -95,6 +177,7 @@ export interface BlockWindow {
   trainImpactMinutes: number;
   horizon: 'DAILY' | 'WEEKLY' | 'MONTHLY';
   crossZonalImpact: boolean;
+  assignedMachines?: string[];
 }
 
 export interface OptimizationMetrics {

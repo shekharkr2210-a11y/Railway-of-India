@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Sparkles, 
   Activity, 
@@ -14,7 +14,13 @@ import {
   Building2,
   UserCheck,
   ShieldCheck,
-  Lock
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Mail,
+  User,
+  LogIn
 } from 'lucide-react';
 import { ScopeLevel, UserRole, ZonalRailway, DivisionalUnit } from '../lib/types';
 
@@ -105,6 +111,56 @@ export const Header: React.FC<HeaderProps> = ({
       if (selectedDivision === 'ALL') setSelectedDivision('LJN');
       setActiveTab('OVERVIEW');
     }
+  };
+
+  // Role-switch authentication modal state
+  const [showRoleAuthModal, setShowRoleAuthModal] = useState(false);
+  const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
+  const [authName, setAuthName] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authShowPassword, setAuthShowPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+
+  const ROLE_LABELS: Record<UserRole, string> = {
+    BOARD_HQ: 'Railway Board HQ Director',
+    ZONAL_GM: 'Zonal General Manager (GM)',
+    DIVISIONAL_DRM: 'Divisional Manager (DRM)',
+    SECTION_CONTROLLER: 'Section Traffic Controller',
+  };
+
+  const handleRoleChangeRequest = (newRole: UserRole) => {
+    if (newRole === userRole) return;
+    setPendingRole(newRole);
+    setAuthName('');
+    setAuthEmail('');
+    setAuthPassword('');
+    setAuthError(null);
+    setAuthShowPassword(false);
+    setShowRoleAuthModal(true);
+  };
+
+  const handleRoleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+
+    if (!authName.trim()) { setAuthError('Full name is required'); return; }
+    if (!authEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authEmail.trim())) {
+      setAuthError('Valid email address is required'); return;
+    }
+    if (!authPassword || authPassword.length < 4) {
+      setAuthError('Password must be at least 4 characters'); return;
+    }
+
+    setAuthLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    if (pendingRole) {
+      setUserRole(pendingRole);
+    }
+    setAuthLoading(false);
+    setShowRoleAuthModal(false);
   };
 
   return (
@@ -198,8 +254,8 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
             <select
               value={userRole}
-              onChange={e => setUserRole(e.target.value as UserRole)}
-              className="bg-white border border-gray-300 rounded-lg px-2.5 py-1 text-emerald-700 font-bold focus:outline-none focus:border-emerald-500"
+              onChange={e => handleRoleChangeRequest(e.target.value as UserRole)}
+              className="bg-white border border-gray-300 rounded-lg px-2.5 py-1 text-emerald-700 font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
             >
               <option value="BOARD_HQ">Railway Board HQ Director</option>
               <option value="ZONAL_GM">Zonal General Manager (GM)</option>
@@ -390,6 +446,116 @@ export const Header: React.FC<HeaderProps> = ({
           Live Ingestion Feeds
         </button>
       </div>
+
+      {/* Role-Switch Authentication Modal */}
+      {showRoleAuthModal && pendingRole && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md mx-4 overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-700 to-indigo-800 px-6 py-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <ShieldCheck className="w-5 h-5 text-white" />
+                <h3 className="text-base font-bold text-white">Role Authentication Required</h3>
+              </div>
+              <p className="text-xs text-blue-200">
+                Switching to: <span className="font-bold text-white">{ROLE_LABELS[pendingRole]}</span>
+              </p>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleRoleAuthSubmit} className="px-6 py-5 space-y-3.5">
+              {authError && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              {/* Name */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={authName}
+                    onChange={e => { setAuthName(e.target.value); setAuthError(null); }}
+                    placeholder="Enter your full name"
+                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="email"
+                    value={authEmail}
+                    onChange={e => { setAuthEmail(e.target.value); setAuthError(null); }}
+                    placeholder="you@indianrailways.gov.in"
+                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type={authShowPassword ? 'text' : 'password'}
+                    value={authPassword}
+                    onChange={e => { setAuthPassword(e.target.value); setAuthError(null); }}
+                    placeholder="Enter password"
+                    className="w-full pl-9 pr-10 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setAuthShowPassword(!authShowPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    tabIndex={-1}
+                  >
+                    {authShowPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRoleAuthModal(false)}
+                  className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="flex-1 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {authLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="w-3.5 h-3.5" />
+                      Authenticate
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
