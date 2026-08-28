@@ -3,7 +3,12 @@ import { generateDigitalSignature } from '@/app/lib/security';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: 'Invalid JSON payload' }, { status: 400 });
+    }
 
     if (!body.blockId) {
       return NextResponse.json({

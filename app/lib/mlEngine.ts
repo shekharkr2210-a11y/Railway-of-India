@@ -21,6 +21,58 @@ export interface DemandPrediction {
   confidenceScore: number; // e.g. 0.94
 }
 
+export interface AssetReliabilityModel {
+  sectionId: string;
+  assetType: 'RAIL_TRACK' | '25KV_OHE' | 'POINT_MACHINE' | 'AXLE_COUNTER';
+  weibullShapeBeta: number; // Beta > 1 indicates wear-out degradation phase
+  scaleEtaGmt: number; // Characteristic life in Gross Million Tonnes (GMT) / operating cycles
+  currentAgeOrGmt: number;
+  cumulativeFailureProbability: number; // F(t) = 1 - e^(-(t/eta)^beta)
+  instantaneousHazardRate: number; // h(t) = (beta/eta) * (t/eta)^(beta-1)
+  remainingUsefulLifeDays: number;
+  preventiveReplacementDue: boolean;
+}
+
+/**
+ * RDSO Indian Railways Calibrated Weibull Asset Reliability & Hazard Model.
+ */
+export function computeWeibullReliability(
+  section: CorridorSection,
+  department: Department,
+  overdueDays: number
+): AssetReliabilityModel {
+  let beta = 2.4; // Wear-out phase default for rail steel
+  let eta = 365 * 4; // 4 year cycle under standard GMT
+  let assetType: AssetReliabilityModel['assetType'] = 'RAIL_TRACK';
+
+  if (department === 'TRD') {
+    beta = 2.1;
+    eta = 365 * 3;
+    assetType = '25KV_OHE';
+  } else if (department === 'SMMS') {
+    beta = 3.0; // Rapid contact wear in electromechanical components
+    eta = 365 * 2;
+    assetType = 'POINT_MACHINE';
+  }
+
+  const currentT = 300 + (overdueDays * 8) + (section.trafficDensity === 'VERY_HIGH' ? 250 : 100);
+  const failureProb = 1 - Math.exp(-Math.pow(currentT / eta, beta));
+  const hazard = (beta / eta) * Math.pow(currentT / eta, beta - 1);
+  const remainingLife = Math.max(0, Math.round((eta - currentT) * (1 / (1 + overdueDays * 0.1))));
+
+  return {
+    sectionId: section.id,
+    assetType,
+    weibullShapeBeta: parseFloat(beta.toFixed(2)),
+    scaleEtaGmt: eta,
+    currentAgeOrGmt: currentT,
+    cumulativeFailureProbability: parseFloat(Math.min(0.99, failureProb).toFixed(3)),
+    instantaneousHazardRate: parseFloat((hazard * 1000).toFixed(3)),
+    remainingUsefulLifeDays: remainingLife,
+    preventiveReplacementDue: failureProb > 0.65 || overdueDays > 5,
+  };
+}
+
 /**
  * Extracts and normalizes high-precision feature vectors from task & section attributes.
  */
@@ -243,23 +295,26 @@ export function explainTaskCriticality(
   const severityScore = Math.round(features.severityWeight * 40 * 2.2);
   const overdueScore = Math.round(features.overdueFactor * 25);
   const speedImpactScore = Math.round(features.speedImpactFactor * 20);
+  const degradationScore = Math.round(features.assetDegradationRate * 10);
+  const riskScore = Math.round(features.dependencyRiskFactor * 5);
   const powerBlockScore = Math.round(features.powerBlockImpact * 5);
   
+  const baseRaw = severityScore + overdueScore + speedImpactScore + degradationScore + riskScore + powerBlockScore;
   const trafficMultiplier = features.trafficDensityMultiplier;
-  const trafficDensityScore = Math.round(((severityScore + overdueScore + speedImpactScore + powerBlockScore) * (trafficMultiplier - 1.0)));
+  const trafficDensityScore = Math.round(baseRaw * (trafficMultiplier - 1.0));
 
   const densityLevel = section?.trafficDensity || 'HIGH';
   const speedKmph = task.speedRestrictionImpactKmvh || 0;
 
-  let explanation = `Task classified as ${task.severity} priority. `;
+  let explanation = `Task classified as ${task.severity} priority (+${severityScore} pts base severity). `;
   if (task.overdueDays > 0) {
-    explanation += `Overdue by ${task.overdueDays} days, triggering an exponential risk penalty of +${overdueScore} pts. `;
+    explanation += `Overdue by ${task.overdueDays} days, triggering non-linear risk escalation (+${overdueScore} pts). `;
   }
   if (speedKmph > 0) {
-    explanation += `Causes a Temporary Speed Restriction of ${speedKmph} km/h, adding +${speedImpactScore} pts. `;
+    explanation += `Causes a Temporary Speed Restriction of ${speedKmph} km/h (+${speedImpactScore} pts). `;
   }
   if (trafficMultiplier > 1.0) {
-    explanation += `Located on ${densityLevel} density trunk corridor (NDLS-HWH / NDLS-MMCT route), applying a ${(trafficMultiplier * 100 - 100).toFixed(0)}% traffic density boost (+${trafficDensityScore} pts). `;
+    explanation += `Located on ${densityLevel} density trunk corridor (NDLS-HWH / NDLS-MMCT route), applying a ${(trafficMultiplier * 100 - 100).toFixed(0)}% density multiplier (+${trafficDensityScore} pts). `;
   }
   if (task.requiresPowerBlock) {
     explanation += `Requires 25kV OHE isolation power block (+${powerBlockScore} pts).`;

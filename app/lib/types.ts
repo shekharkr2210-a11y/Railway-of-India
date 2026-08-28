@@ -178,6 +178,9 @@ export interface BlockWindow {
   horizon: 'DAILY' | 'WEEKLY' | 'MONTHLY';
   crossZonalImpact: boolean;
   assignedMachines?: string[];
+  scheduledDate?: string;
+  weekNumber?: number;
+  monthName?: string;
 }
 
 export interface OptimizationMetrics {

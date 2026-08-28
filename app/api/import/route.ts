@@ -1,11 +1,17 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { taskStore } from '@/app/lib/taskStore';
 import { MaintenanceTask, TaskSeverity, Department } from '@/app/lib/types';
 import { calculateMLCriticality } from '@/app/lib/mlEngine';
 import { INITIAL_CORRIDOR_SECTIONS } from '@/app/lib/mockData';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: 'Invalid JSON payload' }, { status: 400 });
+    }
     const rawTasks = body.tasks;
 
     if (!rawTasks || !Array.isArray(rawTasks)) {
@@ -30,13 +36,13 @@ export async function POST(request: NextRequest) {
         title: item.title || `Imported ${department} Maintenance Work Order`,
         sectionId: item.sectionId || 'SEC-01',
         sectionName: item.sectionName || 'NDLS-FZB (KM 0-44)',
-        startKm: Number(item.startKm) || 10,
-        endKm: Number(item.endKm) || 12,
-        estimatedDurationHours: Number(item.estimatedDurationHours) || 2.0,
+        startKm: item.startKm != null ? Number(item.startKm) : 10,
+        endKm: item.endKm != null ? Number(item.endKm) : 12,
+        estimatedDurationHours: item.estimatedDurationHours != null ? Number(item.estimatedDurationHours) : 2.0,
         severity,
-        overdueDays: Number(item.overdueDays) || 0,
+        overdueDays: item.overdueDays != null ? Number(item.overdueDays) : 0,
         requiresPowerBlock: Boolean(item.requiresPowerBlock || department === 'TRD'),
-        speedRestrictionImpactKmvh: Number(item.speedRestrictionImpactKmvh) || 0,
+        speedRestrictionImpactKmvh: item.speedRestrictionImpactKmvh != null ? Number(item.speedRestrictionImpactKmvh) : 0,
         criticalityScore: 50,
         status: 'PENDING',
       };
@@ -46,6 +52,8 @@ export async function POST(request: NextRequest) {
 
       return task;
     });
+
+    taskStore.addBatch(importedTasks);
 
     return NextResponse.json({
       success: true,

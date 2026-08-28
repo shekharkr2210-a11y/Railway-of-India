@@ -15,22 +15,27 @@ import {
   Info
 } from 'lucide-react';
 import { AIExplainabilityModal } from './AIExplainabilityModal';
+import { CreateTaskModal } from './CreateTaskModal';
 
 interface TaskPriorityTableProps {
   tasks: MaintenanceTask[];
   onToggleTaskStatus: (taskId: string) => void;
+  onTaskCreated?: (task: MaintenanceTask) => void;
 }
 
 export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
   tasks,
   onToggleTaskStatus,
+  onTaskCreated,
 }) => {
   const [selectedDept, setSelectedDept] = useState<string>('ALL');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [xaiTask, setXaiTask] = useState<MaintenanceTask | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [sortBy, setSortBy] = useState<'CRITICALITY_DESC' | 'CRITICALITY_ASC' | 'OVERDUE_DESC' | 'DURATION_DESC'>('CRITICALITY_DESC');
 
-  const filteredTasks = tasks.filter(task => {
+  let filteredTasks = tasks.filter(task => {
     const matchesDept = selectedDept === 'ALL' || task.department === selectedDept;
     const matchesSev = selectedSeverity === 'ALL' || task.severity === selectedSeverity;
     const matchesSearch = 
@@ -39,6 +44,37 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
       task.sourceSystem.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesDept && matchesSev && matchesSearch;
   });
+
+  filteredTasks.sort((a, b) => {
+    if (sortBy === 'CRITICALITY_DESC') return b.criticalityScore - a.criticalityScore;
+    if (sortBy === 'CRITICALITY_ASC') return a.criticalityScore - b.criticalityScore;
+    if (sortBy === 'OVERDUE_DESC') return b.overdueDays - a.overdueDays;
+    if (sortBy === 'DURATION_DESC') return b.estimatedDurationHours - a.estimatedDurationHours;
+    return 0;
+  });
+
+  const exportCSV = () => {
+    const headers = ['ID', 'Title', 'Dept', 'Severity', 'Overdue Days', 'Duration (hrs)', 'Speed Impact', 'Score'];
+    const rows = filteredTasks.map(t => [
+      t.id, 
+      `"${t.title.replace(/"/g, '""')}"`, 
+      t.department, 
+      t.severity, 
+      t.overdueDays, 
+      t.estimatedDurationHours, 
+      t.speedRestrictionImpactKmvh, 
+      t.criticalityScore
+    ].join(','));
+    
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "tasks_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xl mb-6 backdrop-blur-xl">
@@ -91,6 +127,34 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
             <option value="HIGH">High Priority</option>
             <option value="MEDIUM">Medium Priority</option>
           </select>
+
+          {/* Sort By */}
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as any)}
+            className="bg-gray-50 border border-gray-300 rounded-xl px-3 py-1.5 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="CRITICALITY_DESC">Sort: Criticality Score (Desc)</option>
+            <option value="CRITICALITY_ASC">Sort: Criticality Score (Asc)</option>
+            <option value="OVERDUE_DESC">Sort: Overdue Days (Desc)</option>
+            <option value="DURATION_DESC">Sort: Duration (Desc)</option>
+          </select>
+
+          {/* Export CSV Button */}
+          <button
+            onClick={exportCSV}
+            className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-xl font-medium hover:bg-indigo-100 transition flex items-center gap-1.5"
+          >
+            📥 Export CSV
+          </button>
+
+          {/* Register Defect Button */}
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 text-white px-3 py-1.5 rounded-xl font-medium hover:bg-blue-700 transition flex items-center gap-1.5"
+          >
+            ➕ Register Defect / Work Order
+          </button>
         </div>
       </div>
 
@@ -216,6 +280,19 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
         <AIExplainabilityModal
           task={xaiTask}
           onClose={() => setXaiTask(null)}
+        />
+      )}
+
+      {/* Create Task Modal */}
+      {showCreateModal && (
+        <CreateTaskModal
+          onClose={() => setShowCreateModal(false)}
+          onTaskCreated={(task) => {
+            setShowCreateModal(false);
+            if (onTaskCreated) {
+              onTaskCreated(task);
+            }
+          }}
         />
       )}
     </div>

@@ -326,37 +326,75 @@ export const DataIngestionPanel: React.FC<DataIngestionPanelProps> = ({ onTasksI
     setIsSyncing(true);
     setSyncStatus(`Parsing ${file.name}...`);
 
-    setTimeout(async () => {
-      const csvTasks: Partial<MaintenanceTask>[] = [
-        {
-          id: `CSV-ENG-${Date.now()}`,
-          sourceSystem: 'TMS',
-          department: 'ENG',
-          departmentName: 'Civil Engineering',
-          zoneCode: 'NR',
-          divisionCode: 'DLI',
-          title: `Imported from ${file.name}: USFD Rail Defect Repair`,
-          sectionId: 'SEC-01',
-          sectionName: 'NDLS-FZB (KM 0-44)',
-          startKm: 22,
-          endKm: 25,
-          estimatedDurationHours: 2.5,
-          severity: 'HIGH',
-          overdueDays: 1,
-          requiresPowerBlock: false,
-          speedRestrictionImpactKmvh: 30,
-          status: 'PENDING',
-        },
-      ];
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        let parsedTasks: Partial<MaintenanceTask>[] = [];
 
-      const res = await batchImportTasks(csvTasks);
-      if (res.success && onTasksImported) {
-        onTasksImported(res.tasks);
-        setUploadedCount(res.importedCount);
-        setSyncStatus(`✅ Successfully imported ${file.name} (${res.importedCount} records).`);
+        if (file.name.endsWith('.json')) {
+          // Parse JSON file
+          const data = JSON.parse(content);
+          parsedTasks = Array.isArray(data) ? data : data.tasks || [data];
+        } else if (file.name.endsWith('.csv')) {
+          // Parse CSV file
+          const lines = content.split('\n').filter(l => l.trim());
+          if (lines.length > 1) {
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            for (let i = 1; i < lines.length; i++) {
+              const values = lines[i].split(',').map(v => v.trim());
+              const row: Record<string, string> = {};
+              headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
+              parsedTasks.push({
+                sourceSystem: (row['sourcesystem'] || row['source_system'] || 'TMS') as MaintenanceTask['sourceSystem'],
+                department: (row['department'] || row['dept'] || 'ENG') as MaintenanceTask['department'],
+                departmentName: row['departmentname'] || row['department_name'] || '',
+                zoneCode: row['zonecode'] || row['zone_code'] || row['zone'] || 'NCR',
+                divisionCode: row['divisioncode'] || row['division_code'] || row['division'] || 'PRYJ',
+                title: row['title'] || row['description'] || row['defect'] || `Imported from ${file.name}`,
+                sectionId: row['sectionid'] || row['section_id'] || 'SEC-01',
+                sectionName: row['sectionname'] || row['section_name'] || row['section'] || '',
+                startKm: Number(row['startkm'] || row['start_km']) || 0,
+                endKm: Number(row['endkm'] || row['end_km']) || 0,
+                estimatedDurationHours: Number(row['estimateddurationhours'] || row['duration'] || row['hours']) || 2.0,
+                severity: (row['severity'] || 'MEDIUM') as MaintenanceTask['severity'],
+                overdueDays: Number(row['overduedays'] || row['overdue_days'] || row['overdue']) || 0,
+                requiresPowerBlock: row['requirespowerblock'] === 'true' || row['power_block'] === 'true',
+                speedRestrictionImpactKmvh: Number(row['speedrestrictionimpactkmvh'] || row['speed_restriction'] || row['tsr']) || 0,
+                status: 'PENDING',
+              });
+            }
+          }
+        } else {
+          // Unsupported format - try JSON parse as fallback
+          try {
+            const data = JSON.parse(content);
+            parsedTasks = Array.isArray(data) ? data : [data];
+          } catch {
+            setSyncStatus(`❌ Unsupported file format: ${file.name}. Use .json or .csv`);
+            setIsSyncing(false);
+            return;
+          }
+        }
+
+        if (parsedTasks.length === 0) {
+          setSyncStatus(`⚠️ No valid tasks found in ${file.name}`);
+          setIsSyncing(false);
+          return;
+        }
+
+        const res = await batchImportTasks(parsedTasks);
+        if (res.success && onTasksImported) {
+          onTasksImported(res.tasks);
+          setUploadedCount(res.importedCount);
+          setSyncStatus(`✅ Successfully imported ${file.name} (${res.importedCount} records).`);
+        }
+      } catch (err) {
+        setSyncStatus(`❌ Error parsing ${file.name}: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
       setIsSyncing(false);
-    }, 1000);
+    };
+    reader.readAsText(file);
   };
 
   return (

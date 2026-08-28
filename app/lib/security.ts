@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export interface AuditLogEntry {
   id: string;
   timestamp: string;
@@ -22,45 +24,16 @@ export interface SecurityStatus {
 // Input Sanitization against XSS / Injection attacks
 export function sanitizeInput(input: string): string {
   if (!input) return '';
-  return input
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
+  // Only strip control characters and null bytes — don't HTML-encode
+  return input.replace(/[\x00-\x1f\x7f]/g, '').trim();
 }
 
 // SHA-256 HMAC Cryptographic Signature Generator for anti-tamper block sanctions
 export function generateDigitalSignature(blockId: string, payload: Record<string, unknown>): string {
-  const dataString = `${blockId}:${JSON.stringify(payload)}:IR_RAILWAY_SECRET_KEY_2026_CRIS_BDMS`;
-  
-  // Fast 64-bit multi-round mixing hash producing a 64-character SHA256-style hex signature
-  let h1 = 0xdeadbeef ^ dataString.length;
-  let h2 = 0x41c64e6d ^ dataString.length;
-  let h3 = 0x9b05688c ^ dataString.length;
-  let h4 = 0x1f83d9ab ^ dataString.length;
-
-  for (let i = 0; i < dataString.length; i++) {
-    const ch = dataString.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ (ch << 3), 1597334677);
-    h3 = Math.imul(h3 ^ (ch >> 2), 3849203923);
-    h4 = Math.imul(h4 ^ (ch << 5), 2246822519);
-  }
-
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h3 ^ (h3 >>> 13), 3266489909);
-  h3 = Math.imul(h3 ^ (h3 >>> 16), 2246822507) ^ Math.imul(h4 ^ (h4 >>> 13), 3266489909);
-  h4 = Math.imul(h4 ^ (h4 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-
-  const hex1 = (h1 >>> 0).toString(16).padStart(8, '0');
-  const hex2 = (h2 >>> 0).toString(16).padStart(8, '0');
-  const hex3 = (h3 >>> 0).toString(16).padStart(8, '0');
-  const hex4 = (h4 >>> 0).toString(16).padStart(8, '0');
-
-  const fullSig = `${hex1}${hex2}${hex3}${hex4}`.toUpperCase();
-  return `HMAC-SHA256:${fullSig}-CRIS-SANCTIONED`;
+  const secret = process.env.HMAC_SECRET_KEY || 'IR_RAILWAY_DEFAULT_DEV_KEY_2026';
+  const data = `${blockId}:${JSON.stringify(payload)}`;
+  const hmac = crypto.createHmac('sha256', secret).update(data).digest('hex').toUpperCase();
+  return `HMAC-SHA256:${hmac}`;
 }
 
 // Initial Audit Trail Data

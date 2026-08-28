@@ -6,13 +6,15 @@ import { NationalOverview } from './components/NationalOverview';
 import { MetricsOverview } from './components/MetricsOverview';
 import { CorridorMap } from './components/CorridorMap';
 import { TimeSpaceGantt } from './components/TimeSpaceGantt';
+import { CalendarView } from './components/CalendarView';
 import { ShadowBlockShowcase } from './components/ShadowBlockShowcase';
 import { TaskPriorityTable } from './components/TaskPriorityTable';
 import { BDMSWorkflow } from './components/BDMSWorkflow';
 import { DataIngestionPanel } from './components/DataIngestionPanel';
 import { CyberSecurityPanel } from './components/CyberSecurityPanel';
 import { LoginPage } from './components/LoginPage';
-
+import { PendingWorksReport } from './components/PendingWorksReport';
+import { PreventiveMaintenancePanel } from './components/PreventiveMaintenancePanel';
 import { 
   ZONAL_RAILWAYS,
   DIVISIONAL_UNITS,
@@ -30,7 +32,7 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<string>('');
   const [horizon, setHorizon] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
-  const [activeTab, setActiveTab] = useState<'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'BDMS' | 'INGESTION' | 'SECURITY'>('NATIONAL');
+  const [activeTab, setActiveTab] = useState<'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES'>('NATIONAL');
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
   // Enterprise Scope & Role State
@@ -127,6 +129,15 @@ export default function Home() {
     });
     setTasks(updated);
     runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, updated);
+  };
+
+  const handleTaskCreated = (newTask: MaintenanceTask) => {
+    setTasks(prev => {
+      const combined = [newTask, ...prev];
+      runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, combined);
+      return combined;
+    });
+    setToastMessage(`➕ New Task "${newTask.title}" registered successfully!`);
   };
 
   const handleTasksImported = (newTasks: MaintenanceTask[]) => {
@@ -275,6 +286,7 @@ export default function Home() {
               tasks={filteredTasks}
               horizon={horizon}
             />
+            <CalendarView blocks={blocks} horizon={horizon} />
           </div>
         )}
 
@@ -287,6 +299,7 @@ export default function Home() {
               tasks={filteredTasks}
               horizon={horizon}
             />
+            <CalendarView blocks={blocks} horizon={horizon} />
           </div>
         )}
 
@@ -308,7 +321,14 @@ export default function Home() {
             <TaskPriorityTable
               tasks={filteredTasks}
               onToggleTaskStatus={handleToggleTaskStatus}
+              onTaskCreated={handleTaskCreated}
             />
+          </div>
+        )}
+
+        {activeTab === 'PENDING_WORKS' && (
+          <div>
+            <PendingWorksReport tasks={filteredTasks} />
           </div>
         )}
 
@@ -334,6 +354,12 @@ export default function Home() {
         {activeTab === 'INGESTION' && (
           <div>
             <DataIngestionPanel onTasksImported={handleTasksImported} />
+          </div>
+        )}
+
+        {activeTab === 'PM_CYCLES' && (
+          <div>
+            <PreventiveMaintenancePanel sections={filteredSections} tasks={filteredTasks} />
           </div>
         )}
       </main>

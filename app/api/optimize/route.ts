@@ -6,10 +6,19 @@ import { sanitizeInput } from '@/app/lib/security';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: 'Invalid JSON payload' }, { status: 400 });
+    }
 
-    const horizon = (body.horizon || 'WEEKLY') as 'DAILY' | 'WEEKLY' | 'MONTHLY';
-    const scope = (body.scopeLevel || 'NATIONAL') as ScopeLevel;
+    const validHorizons = ['DAILY', 'WEEKLY', 'MONTHLY'];
+    const horizon = (validHorizons.includes(body.horizon) ? body.horizon : 'WEEKLY') as 'DAILY' | 'WEEKLY' | 'MONTHLY';
+    
+    const validScopes = ['NATIONAL', 'ZONE', 'DIVISION'];
+    const scope = (validScopes.includes(body.scopeLevel) ? body.scopeLevel : 'NATIONAL') as ScopeLevel;
+    
     const zone = sanitizeInput(body.selectedZone || 'ALL');
     const division = sanitizeInput(body.selectedDivision || 'ALL');
     const clientTasks: MaintenanceTask[] = body.tasks && Array.isArray(body.tasks) && body.tasks.length > 0

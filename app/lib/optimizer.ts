@@ -91,6 +91,8 @@ export function generateOptimizedBlocks(
     });
 
     // 5. Schedule each cluster into clash-free timetable headway windows
+    const usedWindowSlots = new Set<string>();
+
     clusters.forEach((cluster, idx) => {
       const sumIndividual = cluster.reduce((acc, t) => acc + t.estimatedDurationHours, 0);
       const maxIndividual = Math.max(...cluster.map(t => t.estimatedDurationHours));
@@ -103,29 +105,55 @@ export function generateOptimizedBlocks(
       const needsPower = cluster.some(t => t.requiresPowerBlock);
 
       // Select optimal timetable headway window
-      let chosenStartMinutes: number;
-      let chosenEndMinutes: number;
+      let chosenStartMinutes: number = -1;
+      let chosenEndMinutes: number = -1;
+      let trainImpact: number = 0;
+      let conflictResolved = false;
 
-      if (headwayWindows.length > 0) {
-        // Pick window that minimizes train impact
-        const preferredWindow = headwayWindows[idx % headwayWindows.length];
-        chosenStartMinutes = preferredWindow.startMinutes;
-        chosenEndMinutes = chosenStartMinutes + Math.round(shadowBlockDuration * 60);
-      } else {
+      // Best-fit algorithm: sort by smallest window first
+      const sortedWindows = [...headwayWindows].sort(
+        (a, b) => (a.endMinutes - a.startMinutes) - (b.endMinutes - b.startMinutes)
+      );
+
+      for (const window of sortedWindows) {
+        const windowKey = `${window.startMinutes}-${window.endMinutes}`;
+        if (usedWindowSlots.has(windowKey)) continue;
+
+        const candidateStart = window.startMinutes;
+        const candidateEnd = candidateStart + Math.round(shadowBlockDuration * 60);
+
+        if (candidateEnd > window.endMinutes) continue;
+
+        const startTimeStr = minutesToTimeString(candidateStart);
+        const endTimeStr = minutesToTimeString(candidateEnd);
+        const conflictCheck = checkBlockTrainConflict(sectionId, startTimeStr, endTimeStr, trainMovements);
+
+        if (!conflictCheck.hasConflict || !conflictCheck.isHardPassengerViolation) {
+          chosenStartMinutes = candidateStart;
+          chosenEndMinutes = candidateEnd;
+          trainImpact = conflictCheck.hasConflict ? conflictCheck.delayRiskMinutes : (cluster.length > 1 ? 15 : 45);
+          usedWindowSlots.add(windowKey);
+          conflictResolved = true;
+          break;
+        }
+      }
+
+      if (!conflictResolved) {
         // Fallback night slot (01:00) or midday maintenance window (11:30)
         const isNightSlot = idx % 2 === 1;
         const startHour = isNightSlot ? 1 + (idx * 0.5) : 11.5 + (idx * 0.5);
         chosenStartMinutes = Math.round(startHour * 60);
         chosenEndMinutes = chosenStartMinutes + Math.round(shadowBlockDuration * 60);
+        
+        const startTimeStr = minutesToTimeString(chosenStartMinutes);
+        const endTimeStr = minutesToTimeString(chosenEndMinutes);
+        const conflictCheck = checkBlockTrainConflict(sectionId, startTimeStr, endTimeStr, trainMovements);
+        trainImpact = conflictCheck.hasConflict ? conflictCheck.delayRiskMinutes : (cluster.length > 1 ? 15 : 45);
       }
 
       const startTimeStr = minutesToTimeString(chosenStartMinutes);
       const endTimeStr = minutesToTimeString(chosenEndMinutes);
       const primaryTask = cluster[0];
-
-      // Validate timetable clash against active trains
-      const conflictCheck = checkBlockTrainConflict(sectionId, startTimeStr, endTimeStr, trainMovements);
-      const trainImpact = conflictCheck.hasConflict ? conflictCheck.delayRiskMinutes : (cluster.length > 1 ? 15 : 45);
 
       // Flag cross-zonal trunk corridor intersections (Golden Quadrilateral)
       const isCrossZonal = primaryTask.sectionName.includes('MTJ-AGC') || 
@@ -146,17 +174,38 @@ export function generateOptimizedBlocks(
         );
         if (isHeavyTrackWork) {
           const bcmCode = `BCM-${(idx % 3) + 1}`;
-          assignedMachines.push(`${bcmCode} (Ballast Cleaner)`);
-          assignedMachines.push(`CSM-${(idx % 4) + 10} (Tamping Machine)`);
-          globalMachineBookings.push({ machineCode: bcmCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
+          const isBcmAvailable = !globalMachineBookings.some(
+            b => b.machineCode === bcmCode && 
+            !(chosenEndMinutes <= b.startMinutes || chosenStartMinutes >= b.endMinutes)
+          );
+          if (isBcmAvailable) {
+            assignedMachines.push(`${bcmCode} (Ballast Cleaner)`);
+            globalMachineBookings.push({ machineCode: bcmCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
+          }
+
+          const csmCode = `CSM-${(idx % 4) + 10}`;
+          const isCsmAvailable = !globalMachineBookings.some(
+            b => b.machineCode === csmCode && 
+            !(chosenEndMinutes <= b.startMinutes || chosenStartMinutes >= b.endMinutes)
+          );
+          if (isCsmAvailable) {
+            assignedMachines.push(`${csmCode} (Tamping Machine)`);
+            globalMachineBookings.push({ machineCode: csmCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
+          }
         } else {
           assignedMachines.push(`USFD-${(idx % 2) + 1} (Ultrasonic Flaw Tester)`);
         }
       }
       if (depts.includes('TRD')) {
         const twCode = `TW-${(idx % 3) + 6}`;
-        assignedMachines.push(`${twCode} (8-Wheeler Tower Wagon)`);
-        globalMachineBookings.push({ machineCode: twCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
+        const isTwAvailable = !globalMachineBookings.some(
+          b => b.machineCode === twCode && 
+          !(chosenEndMinutes <= b.startMinutes || chosenStartMinutes >= b.endMinutes)
+        );
+        if (isTwAvailable) {
+          assignedMachines.push(`${twCode} (8-Wheeler Tower Wagon)`);
+          globalMachineBookings.push({ machineCode: twCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
+        }
       }
       if (depts.includes('SMMS')) {
         assignedMachines.push('SMMS Point Machine Calibration Rig');
@@ -183,12 +232,27 @@ export function generateOptimizedBlocks(
         assignedMachines: assignedMachines.length > 0 ? assignedMachines : ['Heavy Track Gang #14'],
       };
 
+      const today = new Date();
+      if (horizon === 'DAILY') {
+        block.scheduledDate = today.toISOString().split('T')[0];
+      } else if (horizon === 'WEEKLY') {
+        const dayOffset = Math.min(6, Math.floor(idx / Math.max(1, Math.ceil(clusters.length / 7))));
+        const date = new Date(today);
+        date.setDate(today.getDate() + dayOffset);
+        block.scheduledDate = date.toISOString().split('T')[0];
+      } else {
+        const dayOffset = Math.min(29, Math.floor(idx / Math.max(1, Math.ceil(clusters.length / 30))));
+        const date = new Date(today);
+        date.setDate(today.getDate() + dayOffset);
+        block.scheduledDate = date.toISOString().split('T')[0];
+      }
+
       generatedBlocks.push(block);
 
       totalIndividualHours += sumIndividual;
       totalScheduledHours += shadowBlockDuration;
       totalDowntimeSaved += downtimeSaved;
-      trainDelaysPrevented += Math.round(cluster.length * 35 + (conflictCheck.hasConflict ? 0 : 45));
+      trainDelaysPrevented += Math.round(cluster.length * 35 + (trainImpact > 0 ? 0 : 45));
     });
   });
 
@@ -209,13 +273,13 @@ export function generateOptimizedBlocks(
   const scopeMultiplier = scopeLevel === 'NATIONAL' ? 18 : scopeLevel === 'ZONE' ? 4 : 1;
 
   const metrics: OptimizationMetrics = {
-    totalDefects: scopeLevel === 'NATIONAL' ? 18450 : totalDefects * scopeMultiplier,
-    criticalTasksCount: scopeLevel === 'NATIONAL' ? 3120 : criticalTasksCount * scopeMultiplier,
-    assetAvailabilityPercentage: scopeLevel === 'NATIONAL' ? 98.4 : assetAvailabilityPercentage,
+    totalDefects: totalDefects * scopeMultiplier,
+    criticalTasksCount: criticalTasksCount * scopeMultiplier,
+    assetAvailabilityPercentage: assetAvailabilityPercentage,
     totalBlockHoursRequested: parseFloat((totalIndividualHours * scopeMultiplier).toFixed(1)),
     optimizedBlockHoursScheduled: parseFloat((totalScheduledHours * scopeMultiplier).toFixed(1)),
     downtimeHoursSaved: parseFloat((totalDowntimeSaved * scopeMultiplier).toFixed(1)),
-    shadowBlockEfficiency: shadowBlockEfficiency > 0 ? shadowBlockEfficiency : 52.4,
+    shadowBlockEfficiency: shadowBlockEfficiency > 0 ? shadowBlockEfficiency : 0,
     trainDelaysPreventedMinutes: trainDelaysPrevented * scopeMultiplier,
     activeZonesCount: 18,
     activeDivisionsCount: 68,
