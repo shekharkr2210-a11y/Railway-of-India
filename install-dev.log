@@ -1,0 +1,13 @@
+
+added 93 packages, and audited 470 packages in 47s
+
+169 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+npm warn allow-scripts 2 packages have install scripts not yet covered by allowScripts:
+npm warn allow-scripts   better-sqlite3@13.0.3 (install: node-gyp rebuild)
+npm warn allow-scripts   unrs-resolver@1.12.2 (postinstall: node postinstall.js)
+npm warn allow-scripts
+npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
+DEV_INSTALL_EXIT=0 

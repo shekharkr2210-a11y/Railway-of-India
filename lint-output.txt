@@ -1,0 +1,147 @@
+
+> problem@0.1.0 lint
+> eslint
+
+
+c:\Users\shekh\problem\app\api\reports\pending-works\route.ts
+  2:37  warning  'INITIAL_CORRIDOR_SECTIONS' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\AIExplainabilityModal.tsx
+  14:3  warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\BDMSWorkflow.tsx
+  21:3  warning  'Layers' is defined but never used      @typescript-eslint/no-unused-vars
+  22:3  warning  'ArrowRight' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\BlockCircularModal.tsx
+  10:3  warning  'Train' is defined but never used     @typescript-eslint/no-unused-vars
+  13:3  warning  'Lock' is defined but never used      @typescript-eslint/no-unused-vars
+  14:3  warning  'Download' is defined but never used  @typescript-eslint/no-unused-vars
+  16:3  warning  'Calendar' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\CorridorMap.tsx
+   6:3  warning  'Train' is defined but never used              @typescript-eslint/no-unused-vars
+   7:3  warning  'AlertOctagon' is defined but never used       @typescript-eslint/no-unused-vars
+  10:3  warning  'CheckCircle2' is defined but never used       @typescript-eslint/no-unused-vars
+  12:3  warning  'ArrowRight' is defined but never used         @typescript-eslint/no-unused-vars
+  13:3  warning  'SlidersHorizontal' is defined but never used  @typescript-eslint/no-unused-vars
+  30:3  warning  'trains' is defined but never used             @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\CyberSecurityPanel.tsx
+   9:3  warning  'AlertTriangle' is defined but never used  @typescript-eslint/no-unused-vars
+  10:3  warning  'CheckCircle2' is defined but never used   @typescript-eslint/no-unused-vars
+  12:3  warning  'Radio' is defined but never used          @typescript-eslint/no-unused-vars
+  14:3  warning  'Activity' is defined but never used       @typescript-eslint/no-unused-vars
+  15:3  warning  'FileCode2' is defined but never used      @typescript-eslint/no-unused-vars
+  16:3  warning  'XCircle' is defined but never used        @typescript-eslint/no-unused-vars
+  17:3  warning  'Eye' is defined but never used            @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\DataIngestionPanel.tsx
+   5:3   warning  'Database' is defined but never used                @typescript-eslint/no-unused-vars
+  13:3   warning  'AlertCircle' is defined but never used             @typescript-eslint/no-unused-vars
+  14:3   warning  'Train' is defined but never used                   @typescript-eslint/no-unused-vars
+  28:10  warning  'uploadedCount' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\Header.tsx
+  14:3  warning  'Building2' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\MetricsOverview.tsx
+  10:3  warning  'CheckCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\NationalOverview.tsx
+   7:3  warning  'MapPin' is defined but never used         @typescript-eslint/no-unused-vars
+   8:3  warning  'TrendingUp' is defined but never used     @typescript-eslint/no-unused-vars
+   9:3  warning  'ShieldCheck' is defined but never used    @typescript-eslint/no-unused-vars
+  10:3  warning  'Zap' is defined but never used            @typescript-eslint/no-unused-vars
+  11:3  warning  'Building2' is defined but never used      @typescript-eslint/no-unused-vars
+  14:3  warning  'ChevronRight' is defined but never used   @typescript-eslint/no-unused-vars
+  15:3  warning  'Sparkles' is defined but never used       @typescript-eslint/no-unused-vars
+  16:3  warning  'Layers' is defined but never used         @typescript-eslint/no-unused-vars
+  18:3  warning  'CheckCircle2' is defined but never used   @typescript-eslint/no-unused-vars
+  19:3  warning  'AlertTriangle' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\PendingWorksReport.tsx
+    3:61  warning  'CheckCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  345:31  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+c:\Users\shekh\problem\app\components\PreventiveMaintenancePanel.tsx
+   6:3   warning  'PreventiveMaintenanceStatus' is defined but never used  @typescript-eslint/no-unused-vars
+   8:42  warning  'CheckCircle' is defined but never used                  @typescript-eslint/no-unused-vars
+  82:66  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  92:62  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+c:\Users\shekh\problem\app\components\ShadowBlockShowcase.tsx
+   7:3  warning  'ArrowRight' is defined but never used  @typescript-eslint/no-unused-vars
+   9:3  warning  'Clock' is defined but never used       @typescript-eslint/no-unused-vars
+  12:3  warning  'TrendingUp' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\TaskPriorityTable.tsx
+    4:27  warning  'Department' is defined but never used                    @typescript-eslint/no-unused-vars
+    4:39  warning  'TaskSeverity' is defined but never used                  @typescript-eslint/no-unused-vars
+    8:3   warning  'Filter' is defined but never used                        @typescript-eslint/no-unused-vars
+   10:3   warning  'Clock' is defined but never used                         @typescript-eslint/no-unused-vars
+   12:3   warning  'ArrowUpDown' is defined but never used                   @typescript-eslint/no-unused-vars
+   13:3   warning  'CheckCircle2' is defined but never used                  @typescript-eslint/no-unused-vars
+   15:3   warning  'Info' is defined but never used                          @typescript-eslint/no-unused-vars
+   38:7   error    'filteredTasks' is never reassigned. Use 'const' instead  prefer-const
+  134:56  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+
+c:\Users\shekh\problem\app\components\TimeSpaceGantt.tsx
+   7:3  warning  'CheckCircle2' is defined but never used    @typescript-eslint/no-unused-vars
+  11:3  warning  'Building2' is defined but never used       @typescript-eslint/no-unused-vars
+  12:3  warning  'FileText' is defined but never used        @typescript-eslint/no-unused-vars
+  13:3  warning  'Activity' is defined but never used        @typescript-eslint/no-unused-vars
+  42:9  warning  'hours' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\components\WhatIfSimulator.tsx
+  72:18  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  72:26  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+c:\Users\shekh\problem\app\components\ZoneDetailModal.tsx
+   8:3  warning  'TrendingUp' is defined but never used    @typescript-eslint/no-unused-vars
+  10:3  warning  'Zap' is defined but never used           @typescript-eslint/no-unused-vars
+  11:3  warning  'Clock' is defined but never used         @typescript-eslint/no-unused-vars
+  12:3  warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+  16:3  warning  'Train' is defined but never used         @typescript-eslint/no-unused-vars
+  17:3  warning  'Award' is defined but never used         @typescript-eslint/no-unused-vars
+  18:3  warning  'Layers' is defined but never used        @typescript-eslint/no-unused-vars
+  19:3  warning  'FileText' is defined but never used      @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\lib\optimizer.ts
+  3:85  warning  'timeStringToMinutes' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\lib\taskStore.ts
+  1:27  warning  'Department' is defined but never used    @typescript-eslint/no-unused-vars
+  1:39  warning  'TaskSeverity' is defined but never used  @typescript-eslint/no-unused-vars
+
+c:\Users\shekh\problem\app\page.tsx
+   35:10  warning  'loggedInUser' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  115:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+c:\Users\shekh\problem\app\page.tsx:115:5
+  113 |   // Run AI Optimization on Mount or Scope Change
+  114 |   useEffect(() => {
+> 115 |     runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, tasks);
+      |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  116 |   }, [horizon, scopeLevel, selectedZone, selectedDivision, runOptimization, tasks]);
+  117 |
+  118 |   const handleManualOptimize = () => {  react-hooks/set-state-in-effect
+
+c:\Users\shekh\problem\theme-converter-2.js
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+c:\Users\shekh\problem\theme-converter.js
+  1:12  error    A `require()` style import is forbidden             @typescript-eslint/no-require-imports
+  2:14  error    A `require()` style import is forbidden             @typescript-eslint/no-require-imports
+  4:7   warning  'directoryPath' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 80 problems (12 errors, 68 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+

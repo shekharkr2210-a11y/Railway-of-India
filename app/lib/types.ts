@@ -181,6 +181,10 @@ export interface BlockWindow {
   scheduledDate?: string;
   weekNumber?: number;
   monthName?: string;
+  /** Server-side HMAC signature, populated by the BDMS sanction API. */
+  signature?: string;
+  /** SHA-256 hash of the signed payload, for tamper verification UI. */
+  payloadHash?: string;
 }
 
 export interface OptimizationMetrics {
@@ -195,4 +199,14 @@ export interface OptimizationMetrics {
   activeZonesCount?: number;
   activeDivisionsCount?: number;
   crossZonalConflictsResolved?: number;
+}
+
+/** Authenticated user returned by the server session layer and login API. */
+export interface SessionUser {
+  id: string;
+  name: string;
+  email?: string;
+  role: UserRole;
+  zoneCode: string;
+  divisionCode: string;
 }
