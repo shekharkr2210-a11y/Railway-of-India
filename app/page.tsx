@@ -15,6 +15,8 @@ import { CyberSecurityPanel } from './components/CyberSecurityPanel';
 import { LoginPage } from './components/LoginPage';
 import { PendingWorksReport } from './components/PendingWorksReport';
 import { PreventiveMaintenancePanel } from './components/PreventiveMaintenancePanel';
+import { WhatIfSimulator } from './components/WhatIfSimulator';
+import { recalculateTasksWithWhatIf } from './lib/mlEngine';
 import { 
   ZONAL_RAILWAYS,
   DIVISIONAL_UNITS,
@@ -23,7 +25,7 @@ import {
   INITIAL_TRAIN_MOVEMENTS 
 } from './lib/mockData';
 import { generateOptimizedBlocks } from './lib/optimizer';
-import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, UserRole } from './lib/types';
+import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, UserRole, WhatIfScenario } from './lib/types';
 import { INITIAL_AUDIT_LOGS, INITIAL_SECURITY_STATUS, generateDigitalSignature, AuditLogEntry } from './lib/security';
 import { runServerOptimization, postBackendBdmsSanction } from './lib/apiClient';
 import { Sparkles } from 'lucide-react';
@@ -145,6 +147,13 @@ export default function Home() {
     setTasks(combined);
     runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, combined);
     setToastMessage(`📥 Ingested ${newTasks.length} external defects from CRIS Data Bus! Re-optimizing...`);
+  };
+
+  const handleApplyWhatIfScenario = (scenario: WhatIfScenario) => {
+    const recalculated = recalculateTasksWithWhatIf(tasks, scenario, INITIAL_CORRIDOR_SECTIONS);
+    setTasks(recalculated);
+    runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, recalculated);
+    setToastMessage(`⚡ What-If Simulation Applied (Monsoon: ${scenario.monsoonWeatherFactor}x, Freight Surge: +${scenario.freightTrafficSurgePercentage}%)! Recalibrated schedule.`);
   };
 
   const handleApproveBlock = async (blockId: string) => {
@@ -287,6 +296,7 @@ export default function Home() {
               horizon={horizon}
             />
             <CalendarView blocks={blocks} horizon={horizon} />
+            <WhatIfSimulator onApplyScenario={handleApplyWhatIfScenario} />
           </div>
         )}
 
@@ -318,6 +328,7 @@ export default function Home() {
 
         {activeTab === 'TASKS' && (
           <div>
+            <WhatIfSimulator onApplyScenario={handleApplyWhatIfScenario} />
             <TaskPriorityTable
               tasks={filteredTasks}
               onToggleTaskStatus={handleToggleTaskStatus}

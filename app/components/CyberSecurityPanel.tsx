@@ -43,21 +43,21 @@ export const CyberSecurityPanel: React.FC<CyberSecurityPanelProps> = ({
                 ZERO TRUST ARCHITECTURE ACTIVE
               </span>
             </div>
-            <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-xl font-extrabold text-white tracking-tight">
               Critical National Infrastructure Defense & Anti-Tamper Protection
             </h2>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-300 mt-1">
               Hardened against DDoS attacks, SQL/XSS injections, unauthorized block tampering & insider threats
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="bg-white/80 p-3 rounded-xl border border-gray-200 text-center">
-              <div className="text-gray-500 text-[10px] uppercase font-bold">Threats Blocked</div>
+            <div className="bg-white/10 p-3 rounded-xl border border-white/20 text-center">
+              <div className="text-gray-300 text-[10px] uppercase font-bold">Threats Blocked</div>
               <div className="text-base font-extrabold text-emerald-400">{status.activeThreatsBlockedCount} Attacks</div>
             </div>
-            <div className="bg-white/80 p-3 rounded-xl border border-gray-200 text-center">
-              <div className="text-gray-500 text-[10px] uppercase font-bold">Crypto Signatures</div>
+            <div className="bg-white/10 p-3 rounded-xl border border-white/20 text-center">
+              <div className="text-gray-300 text-[10px] uppercase font-bold">Crypto Signatures</div>
               <div className="text-base font-extrabold text-cyan-400">HMAC-SHA256</div>
             </div>
           </div>

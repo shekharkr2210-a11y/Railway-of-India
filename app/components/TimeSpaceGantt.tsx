@@ -115,13 +115,13 @@ export const TimeSpaceGantt: React.FC<TimeSpaceGanttProps> = ({
       {viewMode === 'HOURLY' && (
         <div className="space-y-4">
           <div className="overflow-x-auto rounded-xl border border-gray-200 bg-gray-50">
-            <div className="min-w-[900px]">
-              {/* Time Header Grid */}
-              <div className="grid grid-cols-25 border-b border-gray-300 py-2.5 px-4 text-[10px] text-gray-600 font-mono font-bold bg-gray-100">
+            <div className="min-w-[1000px]">
+              {/* Time Header Grid (24 Hours) */}
+              <div className="grid grid-cols-28 border-b border-gray-300 py-2.5 px-4 text-[10px] text-gray-600 font-mono font-bold bg-gray-100 items-center">
                 <div className="col-span-4 text-left font-sans text-gray-800 font-bold">Corridor Section / Track</div>
-                {hours.slice(0, 21).map(h => (
+                {Array.from({ length: 24 }).map((_, h) => (
                   <div key={h} className="col-span-1 text-center">
-                    {h.toString().padStart(2, '0')}:00
+                    {h.toString().padStart(2, '0')}
                   </div>
                 ))}
               </div>
@@ -133,7 +133,7 @@ export const TimeSpaceGantt: React.FC<TimeSpaceGanttProps> = ({
                   const secTrains = trains.filter(t => t.sectionId === sec.id || sec.id.includes(t.sectionId));
 
                   return (
-                    <div key={sec.id} className="grid grid-cols-25 items-center py-4 px-4 hover:bg-gray-100/50 transition-colors group relative">
+                    <div key={sec.id} className="grid grid-cols-28 items-center py-4 px-4 hover:bg-gray-100/50 transition-colors group relative">
                       {/* Section Name & Metadata */}
                       <div className="col-span-4 pr-3">
                         <div className="font-bold text-xs text-gray-900 group-hover:text-indigo-600 transition-colors">
@@ -144,11 +144,11 @@ export const TimeSpaceGantt: React.FC<TimeSpaceGanttProps> = ({
                         </div>
                       </div>
 
-                      {/* 20-Hour Visual Timeline Canvas */}
-                      <div className="col-span-21 relative h-12 bg-white rounded-lg border border-gray-200 overflow-hidden shadow-inner">
-                        {/* Grid lines for each hour */}
-                        <div className="absolute inset-0 grid grid-cols-21 pointer-events-none divide-x divide-gray-100">
-                          {Array.from({ length: 21 }).map((_, i) => (
+                      {/* 24-Hour Visual Timeline Canvas */}
+                      <div className="col-span-24 relative h-12 bg-white rounded-lg border border-gray-200 overflow-hidden shadow-inner">
+                        {/* Grid lines for each hour (24 cols) */}
+                        <div className="absolute inset-0 grid grid-cols-24 pointer-events-none divide-x divide-gray-100">
+                          {Array.from({ length: 24 }).map((_, i) => (
                             <div key={i} className="h-full"></div>
                           ))}
                         </div>
@@ -156,9 +156,11 @@ export const TimeSpaceGantt: React.FC<TimeSpaceGanttProps> = ({
                         {/* Train Movement Trajectory Lines (Timetable Constraints) */}
                         {secTrains.map(train => {
                           const startHour = parseHour(train.entryTime);
-                          const endHour = parseHour(train.exitTime);
-                          const leftPct = Math.max(0, Math.min(100, (startHour / 20) * 100));
-                          const widthPct = Math.max(2, Math.min(100 - leftPct, ((endHour - startHour) / 20) * 100));
+                          let endHour = parseHour(train.exitTime);
+                          if (endHour < startHour) endHour += 24; // Handle midnight wrap
+                          
+                          const leftPct = Math.max(0, Math.min(100, (startHour / 24) * 100));
+                          const widthPct = Math.max(2, Math.min(100 - leftPct, ((endHour - startHour) / 24) * 100));
                           const isFreight = train.type === 'FREIGHT_GOODS';
 
                           return (
@@ -181,9 +183,11 @@ export const TimeSpaceGantt: React.FC<TimeSpaceGanttProps> = ({
                         {/* Scheduled Maintenance Blocks */}
                         {secBlocks.map(block => {
                           const startHour = parseHour(block.startTime);
-                          const endHour = parseHour(block.endTime);
-                          const leftPct = Math.max(0, Math.min(100, (startHour / 20) * 100));
-                          const widthPct = Math.max(3, Math.min(100 - leftPct, ((endHour - startHour) / 20) * 100));
+                          let endHour = parseHour(block.endTime);
+                          if (endHour < startHour) endHour += 24;
+                          
+                          const leftPct = Math.max(0, Math.min(100, (startHour / 24) * 100));
+                          const widthPct = Math.max(3, Math.min(100 - leftPct, ((endHour - startHour) / 24) * 100));
 
                           return (
                             <div
@@ -192,7 +196,7 @@ export const TimeSpaceGantt: React.FC<TimeSpaceGanttProps> = ({
                               style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                               className={`absolute top-1 bottom-1 rounded-md z-20 cursor-pointer transition-all flex items-center justify-between px-2 text-[10px] font-bold shadow-md ${
                                 block.isShadowBlock
-                                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400'
+                                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400'
                                   : 'bg-blue-600 hover:bg-blue-500 text-white border border-blue-400'
                               }`}
                             >

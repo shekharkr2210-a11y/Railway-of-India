@@ -117,26 +117,26 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onTas
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Start KM</label>
-                <input type="number" step="0.1" value={startKm} onChange={e => setStartKm(parseFloat(e.target.value))} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                <input type="number" step="0.1" value={startKm} onChange={e => setStartKm(parseFloat(e.target.value) || 0)} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">End KM</label>
-                <input type="number" step="0.1" value={endKm} onChange={e => setEndKm(parseFloat(e.target.value))} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                <input type="number" step="0.1" value={endKm} onChange={e => setEndKm(parseFloat(e.target.value) || 0)} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Duration (hrs)</label>
-                <input type="number" step="0.5" value={duration} onChange={e => setDuration(parseFloat(e.target.value))} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                <input type="number" step="0.5" value={duration} onChange={e => setDuration(parseFloat(e.target.value) || 1)} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Overdue Days</label>
-                <input type="number" value={overdueDays} onChange={e => setOverdueDays(parseInt(e.target.value, 10))} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                <input type="number" value={overdueDays} onChange={e => setOverdueDays(parseInt(e.target.value, 10) || 0)} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Speed Impact (km/h)</label>
-                <input type="number" value={speedRestriction} onChange={e => setSpeedRestriction(parseInt(e.target.value, 10))} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                <input type="number" value={speedRestriction} onChange={e => setSpeedRestriction(parseInt(e.target.value, 10) || 0)} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
               </div>
             </div>
 
