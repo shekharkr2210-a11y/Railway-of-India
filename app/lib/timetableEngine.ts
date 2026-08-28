@@ -32,9 +32,10 @@ export function minutesToTimeString(minutes: number): string {
 }
 
 /**
+ * High-Precision Headway Interval Sweep-Line Solver.
  * Scans train timetables and identifies clash-free maintenance block windows.
- * Hard constraint: Passenger trains (Vande Bharat, Rajdhani) must NEVER be impacted.
- * Soft constraint: Freight trains may be regulated if required (adds penalty).
+ * Hard constraint: High-speed passenger trains (Vande Bharat, Rajdhani, Shatabdi) must NEVER be delayed.
+ * Soft constraint: Freight trains may be regulated if required (adds minimal penalty score).
  */
 export function findAvailableHeadwayWindows(
   sectionId: string,
@@ -50,7 +51,7 @@ export function findAvailableHeadwayWindows(
   const minGapMinutes = minDurationHours * 60 + (safetyClearanceMinutes * 2);
   const gaps: HeadwayGapWindow[] = [];
 
-  // If no trains in section, full day is open
+  // If no trains recorded in section, open standard maintenance slots
   if (sectionTrains.length === 0) {
     gaps.push({
       sectionId,
@@ -75,7 +76,7 @@ export function findAvailableHeadwayWindows(
     return gaps;
   }
 
-  // 1. Check window before first train
+  // 1. Check window before first train of the day
   const firstTrain = sectionTrains[0];
   const firstTrainEntry = timeStringToMinutes(firstTrain.entryTime);
   if (firstTrainEntry >= minGapMinutes) {
@@ -130,12 +131,12 @@ export function findAvailableHeadwayWindows(
     }
   }
 
-  // 3. Check window after last train
+  // 3. Check window after last train of the day
   const lastTrain = sectionTrains[sectionTrains.length - 1];
   const lastTrainExit = timeStringToMinutes(lastTrain.exitTime);
   if (1440 - lastTrainExit >= minGapMinutes) {
     const startM = lastTrainExit + safetyClearanceMinutes;
-    const endM = Math.min(1440, startM + 240); // Up to 4h block
+    const endM = Math.min(1440, startM + 240); // Up to 4.0h block window
     const durH = (endM - startM) / 60;
     if (durH >= minDurationHours) {
       gaps.push({
@@ -156,7 +157,7 @@ export function findAvailableHeadwayWindows(
 }
 
 /**
- * Validates if a scheduled block window conflicts with any passenger or freight trains.
+ * Validates whether a proposed maintenance block window conflicts with any passenger or freight trains.
  */
 export function checkBlockTrainConflict(
   sectionId: string,

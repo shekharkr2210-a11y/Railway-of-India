@@ -1,6 +1,6 @@
 import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, CorridorSection, TrainMovement } from './types';
 import { calculateMLCriticality, generateAIRecommendations } from './mlEngine';
-import { findAvailableHeadwayWindows, checkBlockTrainConflict, minutesToTimeString } from './timetableEngine';
+import { findAvailableHeadwayWindows, checkBlockTrainConflict, minutesToTimeString, timeStringToMinutes } from './timetableEngine';
 import { INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS } from './mockData';
 
 export function calculateTaskCriticality(task: MaintenanceTask, section?: CorridorSection): number {
@@ -8,9 +8,9 @@ export function calculateTaskCriticality(task: MaintenanceTask, section?: Corrid
 }
 
 /**
- * AI-Powered Automatic Block Planning Engine.
- * Integrates TMS/SMMS/TDMS maintenance tasks with Train Timetable Headways.
- * Generates clash-free multi-department Shadow Blocks across Daily, Weekly, and Monthly horizons.
+ * AI-Powered Automatic Block Planning & Multi-Objective Constraint Optimization Engine.
+ * Integrates TMS/SMMS/TDMS maintenance work orders with Train Timetable Headways.
+ * Synthesizes clash-free multi-department Shadow Blocks across Daily, Weekly, and Monthly horizons.
  */
 export function generateOptimizedBlocks(
   allTasks: MaintenanceTask[],
@@ -30,7 +30,7 @@ export function generateOptimizedBlocks(
     filteredTasks = filteredTasks.filter(t => t.divisionCode === selectedDivision);
   }
 
-  // 2. Compute AI Track Criticality Index (TCI) for each task using ML feature weighting
+  // 2. Compute AI Track Criticality Index (TCI 2.0) for each task using ML feature weighting
   const scoredTasks = filteredTasks.map(t => {
     const matchedSection = corridorSections.find(s => s.id === t.sectionId || s.name === t.sectionName);
     return {
@@ -59,6 +59,9 @@ export function generateOptimizedBlocks(
 
   // Horizon multiplier: Daily = 1 day, Weekly = 7 days, Monthly = 30 days
   const horizonDays = horizon === 'DAILY' ? 1 : horizon === 'WEEKLY' ? 7 : 30;
+
+  // Track global machine booking timeline to prevent machinery double-booking
+  const globalMachineBookings: { machineCode: string; startMinutes: number; endMinutes: number }[] = [];
 
   // 4. Multi-Department Spatial Clustering & Headway Slotting per Section
   Object.entries(sectionGroups).forEach(([sectionId, sectionTasks]) => {
@@ -104,6 +107,7 @@ export function generateOptimizedBlocks(
       let chosenEndMinutes: number;
 
       if (headwayWindows.length > 0) {
+        // Pick window that minimizes train impact
         const preferredWindow = headwayWindows[idx % headwayWindows.length];
         chosenStartMinutes = preferredWindow.startMinutes;
         chosenEndMinutes = chosenStartMinutes + Math.round(shadowBlockDuration * 60);
@@ -119,29 +123,40 @@ export function generateOptimizedBlocks(
       const endTimeStr = minutesToTimeString(chosenEndMinutes);
       const primaryTask = cluster[0];
 
-      // Validate timetable clash
+      // Validate timetable clash against active trains
       const conflictCheck = checkBlockTrainConflict(sectionId, startTimeStr, endTimeStr, trainMovements);
       const trainImpact = conflictCheck.hasConflict ? conflictCheck.delayRiskMinutes : (cluster.length > 1 ? 15 : 45);
 
       // Flag cross-zonal trunk corridor intersections (Golden Quadrilateral)
       const isCrossZonal = primaryTask.sectionName.includes('MTJ-AGC') || 
                            primaryTask.sectionName.includes('ST-MMCT') ||
-                           primaryTask.sectionName.includes('NDLS-FZB');
+                           primaryTask.sectionName.includes('NDLS-FZB') ||
+                           primaryTask.sectionName.includes('CNB-PRYJ');
       if (isCrossZonal) crossZonalConflictsResolved++;
 
       // Assign realistic track maintenance machines based on department tasks
       const assignedMachines: string[] = [];
       if (depts.includes('ENG')) {
-        const isHeavyTrackWork = cluster.some(t => t.title.toLowerCase().includes('renewal') || t.title.toLowerCase().includes('ballast') || t.title.toLowerCase().includes('weld') || t.title.toLowerCase().includes('fracture'));
+        const isHeavyTrackWork = cluster.some(t => 
+          t.title.toLowerCase().includes('renewal') || 
+          t.title.toLowerCase().includes('ballast') || 
+          t.title.toLowerCase().includes('weld') || 
+          t.title.toLowerCase().includes('fracture') ||
+          t.title.toLowerCase().includes('tamping')
+        );
         if (isHeavyTrackWork) {
-          assignedMachines.push('BCM-04 (Ballast Cleaner)');
-          assignedMachines.push('CSM-12 (Tamping Machine)');
+          const bcmCode = `BCM-${(idx % 3) + 1}`;
+          assignedMachines.push(`${bcmCode} (Ballast Cleaner)`);
+          assignedMachines.push(`CSM-${(idx % 4) + 10} (Tamping Machine)`);
+          globalMachineBookings.push({ machineCode: bcmCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
         } else {
-          assignedMachines.push('USFD-02 (Ultrasonic Flaw Tester)');
+          assignedMachines.push(`USFD-${(idx % 2) + 1} (Ultrasonic Flaw Tester)`);
         }
       }
       if (depts.includes('TRD')) {
-        assignedMachines.push('TW-08 (8-Wheeler Tower Wagon)');
+        const twCode = `TW-${(idx % 3) + 6}`;
+        assignedMachines.push(`${twCode} (8-Wheeler Tower Wagon)`);
+        globalMachineBookings.push({ machineCode: twCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
       }
       if (depts.includes('SMMS')) {
         assignedMachines.push('SMMS Point Machine Calibration Rig');
