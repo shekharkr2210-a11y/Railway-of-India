@@ -1,18 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MaintenanceTask, Department, TaskSeverity } from '../lib/types';
+import { MaintenanceTask } from '../lib/types';
 import { 
   ShieldAlert, 
   Search, 
-  Filter, 
   AlertTriangle, 
-  Clock, 
   Zap, 
-  ArrowUpDown, 
-  CheckCircle2,
-  Sparkles,
-  Info
+  Sparkles
 } from 'lucide-react';
 import { AIExplainabilityModal } from './AIExplainabilityModal';
 import { CreateTaskModal } from './CreateTaskModal';
@@ -35,7 +30,7 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [sortBy, setSortBy] = useState<'CRITICALITY_DESC' | 'CRITICALITY_ASC' | 'OVERDUE_DESC' | 'DURATION_DESC'>('CRITICALITY_DESC');
 
-  let filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter(task => {
     const matchesDept = selectedDept === 'ALL' || task.department === selectedDept;
     const matchesSev = selectedSeverity === 'ALL' || task.severity === selectedSeverity;
     const matchesSearch = 
@@ -131,7 +126,7 @@ export const TaskPriorityTable: React.FC<TaskPriorityTableProps> = ({
           {/* Sort By */}
           <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as any)}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
             className="bg-gray-50 border border-gray-300 rounded-xl px-3 py-1.5 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="CRITICALITY_DESC">Sort: Criticality Score (Desc)</option>

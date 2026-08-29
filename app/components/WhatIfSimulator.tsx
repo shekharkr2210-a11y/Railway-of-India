@@ -69,7 +69,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
           <div className="flex items-center gap-2">
             <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <Sliders className="w-5 h-5 text-indigo-600" />
-              AI "What-If" Scenario & Network Stress-Testing Simulator
+              AI &quot;What-If&quot; Scenario &amp; Network Stress-Testing Simulator
             </h2>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
               Interactive Parameter Modeling

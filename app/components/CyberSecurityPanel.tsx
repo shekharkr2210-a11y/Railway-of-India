@@ -6,15 +6,8 @@ import {
   ShieldCheck, 
   Lock, 
   Key, 
-  AlertTriangle, 
-  CheckCircle2, 
   Terminal, 
-  Radio, 
-  Cpu, 
-  Activity,
-  FileCode2,
-  XCircle,
-  Eye
+  Cpu
 } from 'lucide-react';
 
 interface CyberSecurityPanelProps {

@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { 
-  Database, 
   CheckCircle2, 
   RefreshCw, 
   Radio, 
@@ -10,9 +9,7 @@ import {
   FileSpreadsheet, 
   Sparkles, 
   Download,
-  AlertCircle,
-  Train,
-  Zap,
+  Zap, 
   ShieldAlert
 } from 'lucide-react';
 import { batchImportTasks } from '../lib/apiClient';
@@ -425,9 +422,16 @@ export const DataIngestionPanel: React.FC<DataIngestionPanelProps> = ({ onTasksI
 
       {/* Sync Status Banner */}
       {syncStatus && (
-        <div className="mb-6 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-          <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>{syncStatus}</span>
+        <div className="mb-6 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between gap-2 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{syncStatus}</span>
+          </div>
+          {uploadedCount !== null && (
+            <span className="px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-800 text-[10px] font-bold">
+              +{uploadedCount} Records Processed
+            </span>
+          )}
         </div>
       )}
 

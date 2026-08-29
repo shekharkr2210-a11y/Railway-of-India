@@ -7,8 +7,7 @@ import {
   Clock, 
   Layers, 
   AlertTriangle, 
-  CheckCircle,
-  Zap,
+  Zap, 
   ShieldCheck
 } from 'lucide-react';
 

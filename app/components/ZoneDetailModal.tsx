@@ -5,18 +5,10 @@ import { ZonalRailway, DivisionalUnit, MaintenanceTask } from '../lib/types';
 import { 
   X, 
   Building2, 
-  TrendingUp, 
   ShieldAlert, 
-  Zap, 
-  Clock, 
-  CheckCircle2, 
   ArrowRight, 
   Sparkles, 
-  MapPin, 
-  Train, 
-  Award, 
-  Layers, 
-  FileText 
+  MapPin 
 } from 'lucide-react';
 
 interface ZoneDetailModalProps {

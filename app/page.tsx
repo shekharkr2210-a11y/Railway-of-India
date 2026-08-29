@@ -113,8 +113,27 @@ export default function Home() {
 
   // Run AI Optimization on Mount or Scope Change
   useEffect(() => {
-    runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, tasks);
-  }, [horizon, scopeLevel, selectedZone, selectedDivision, runOptimization, tasks]);
+    let active = true;
+    const execute = async () => {
+      try {
+        const response = await runServerOptimization(horizon, scopeLevel, selectedZone, selectedDivision, tasks);
+        if (active && response.success) {
+          setBlocks(response.blocks);
+          setMetrics(response.metrics);
+        }
+      } catch {
+        if (active) {
+          const result = generateOptimizedBlocks(tasks, horizon, scopeLevel, selectedZone, selectedDivision);
+          setBlocks(result.blocks);
+          setMetrics(result.metrics);
+        }
+      }
+    };
+    execute();
+    return () => {
+      active = false;
+    };
+  }, [horizon, scopeLevel, selectedZone, selectedDivision, tasks]);
 
   const handleManualOptimize = () => {
     runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, tasks);
@@ -245,6 +264,8 @@ export default function Home() {
         setUserRole={setUserRole}
         zones={ZONAL_RAILWAYS}
         divisions={DIVISIONAL_UNITS}
+        loggedInUser={loggedInUser}
+        onLogout={() => setIsAuthenticated(false)}
       />
 
       {/* Floating Notification Toast */}

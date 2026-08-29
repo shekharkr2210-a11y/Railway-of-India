@@ -1,6 +1,6 @@
 import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, CorridorSection, TrainMovement } from './types';
 import { calculateMLCriticality, generateAIRecommendations } from './mlEngine';
-import { findAvailableHeadwayWindows, checkBlockTrainConflict, minutesToTimeString, timeStringToMinutes } from './timetableEngine';
+import { findAvailableHeadwayWindows, checkBlockTrainConflict, minutesToTimeString } from './timetableEngine';
 import { INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS } from './mockData';
 
 export function calculateTaskCriticality(task: MaintenanceTask, section?: CorridorSection): number {

@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { INITIAL_MAINTENANCE_TASKS, INITIAL_CORRIDOR_SECTIONS } from '@/app/lib/mockData';
+import { INITIAL_MAINTENANCE_TASKS } from '@/app/lib/mockData';
 import { MaintenanceTask } from '@/app/lib/types';
 
 export async function GET(request: NextRequest) {

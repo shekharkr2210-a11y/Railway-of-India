@@ -11,7 +11,6 @@ import {
   Clock, 
   Zap, 
   TrendingUp, 
-  CheckCircle2, 
   Layers, 
   Info,
   Scale

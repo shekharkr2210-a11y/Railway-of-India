@@ -1,11 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { MaintenanceTask, CorridorSection, Department } from '../lib/types';
 import { 
-  generatePreventiveMaintenanceSchedule, 
-  STANDARD_MAINTENANCE_CYCLES, 
-  PreventiveMaintenanceStatus 
+  generatePreventiveMaintenanceSchedule,
+  STANDARD_MAINTENANCE_CYCLES
 } from '../lib/preventiveMaintenanceEngine';
-import { Calendar, AlertTriangle, Clock, CheckCircle, Shield, Wrench } from 'lucide-react';
+import { Calendar, AlertTriangle, Clock, Shield, Wrench } from 'lucide-react';
 
 interface PreventiveMaintenancePanelProps {
   sections: CorridorSection[];
@@ -79,7 +78,7 @@ export const PreventiveMaintenancePanel: React.FC<PreventiveMaintenancePanelProp
       <div className="bg-white border border-gray-200 rounded-xl p-4 flex gap-4">
         <select
           value={filterDepartment}
-          onChange={(e) => setFilterDepartment(e.target.value as any)}
+          onChange={(e) => setFilterDepartment(e.target.value as typeof filterDepartment)}
           className="border border-gray-300 rounded px-3 py-1.5 text-sm"
         >
           <option value="ALL">All Departments</option>
@@ -89,7 +88,7 @@ export const PreventiveMaintenancePanel: React.FC<PreventiveMaintenancePanelProp
         </select>
         <select
           value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as any)}
+          onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
           className="border border-gray-300 rounded px-3 py-1.5 text-sm"
         >
           <option value="ALL">All Statuses</option>

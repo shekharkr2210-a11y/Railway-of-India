@@ -18,8 +18,6 @@ import {
   Sparkles,
   FileText,
   Building2,
-  Layers,
-  ArrowRight,
   Copy,
   Check
 } from 'lucide-react';

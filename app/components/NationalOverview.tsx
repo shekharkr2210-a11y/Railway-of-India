@@ -4,19 +4,9 @@ import React, { useState } from 'react';
 import { ZonalRailway, DivisionalUnit, ScopeLevel, UserRole } from '../lib/types';
 import { 
   Globe, 
-  MapPin, 
-  TrendingUp, 
-  ShieldCheck, 
-  Zap, 
-  Building2, 
   Train, 
   Award, 
-  ChevronRight, 
-  Sparkles, 
-  Layers, 
   X, 
-  CheckCircle2, 
-  AlertTriangle, 
   ArrowRight 
 } from 'lucide-react';
 

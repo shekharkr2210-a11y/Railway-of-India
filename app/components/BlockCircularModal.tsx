@@ -7,13 +7,9 @@ import {
   Printer, 
   X, 
   ShieldCheck, 
-  Train, 
   CheckCircle2, 
   Zap, 
-  Lock, 
-  Download,
-  Building2,
-  Calendar
+  Building2
 } from 'lucide-react';
 import { generateClientSignature } from '../lib/clientSecurity';
 

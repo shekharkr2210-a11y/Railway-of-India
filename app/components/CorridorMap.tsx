@@ -3,14 +3,9 @@
 import React, { useState } from 'react';
 import { CorridorSection, MaintenanceTask, BlockWindow, TrainMovement } from '../lib/types';
 import { 
-  Train, 
-  AlertOctagon, 
   Zap, 
   ShieldAlert, 
-  CheckCircle2, 
   Clock,
-  ArrowRight,
-  SlidersHorizontal,
   ChevronRight
 } from 'lucide-react';
 
@@ -18,7 +13,7 @@ interface CorridorMapProps {
   sections: CorridorSection[];
   tasks: MaintenanceTask[];
   blocks: BlockWindow[];
-  trains: TrainMovement[];
+  trains?: TrainMovement[];
   onSelectSection: (sectionId: string) => void;
   selectedSectionId: string | null;
 }
@@ -27,7 +22,6 @@ export const CorridorMap: React.FC<CorridorMapProps> = ({
   sections,
   tasks,
   blocks,
-  trains,
   onSelectSection,
   selectedSectionId,
 }) => {

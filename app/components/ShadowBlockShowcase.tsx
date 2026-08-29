@@ -4,12 +4,9 @@ import React from 'react';
 import { BlockWindow } from '../lib/types';
 import { 
   Sparkles, 
-  ArrowRight, 
   CheckCircle2, 
-  Clock, 
   ShieldCheck, 
   Zap, 
-  TrendingUp, 
   XCircle 
 } from 'lucide-react';
 

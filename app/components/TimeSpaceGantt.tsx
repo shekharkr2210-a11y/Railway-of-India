@@ -4,13 +4,9 @@ import React, { useState } from 'react';
 import { CorridorSection, BlockWindow, TrainMovement, MaintenanceTask } from '../lib/types';
 import { 
   Clock, 
-  CheckCircle2, 
   Zap, 
   Sparkles,
-  Info,
-  Building2,
-  FileText,
-  Activity
+  Info
 } from 'lucide-react';
 import { AIExplainabilityModal } from './AIExplainabilityModal';
 
@@ -39,7 +35,6 @@ export const TimeSpaceGantt: React.FC<TimeSpaceGanttProps> = ({
     return (h || 0) + (m || 0) / 60;
   };
 
-  const hours = Array.from({ length: 25 }, (_, i) => i);
   const weekDays = ['Monday (Day 1)', 'Tuesday (Day 2)', 'Wednesday (Day 3)', 'Thursday (Day 4)', 'Friday (Day 5)', 'Saturday (Day 6)', 'Sunday (Day 7)'];
 
   return (

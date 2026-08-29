@@ -98,7 +98,7 @@ export async function PATCH(request: NextRequest) {
   if (!validated.success) {
     return NextResponse.json({ success: false, error: validated.error.issues[0]?.message ?? 'Invalid input' }, { status: 400 });
   }
-  const { id, ...rest } = validated.data;
+  const rest = validated.data;
 
   const updated = taskStore.update(record.id, rest);
   if (!updated) {

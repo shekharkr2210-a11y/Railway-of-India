@@ -1,6 +1,6 @@
 import React from 'react';
 import { MaintenanceTask } from '../lib/types';
-import { Briefcase, AlertTriangle, Clock, Clock4, FileText, CheckCircle, BarChart3, Wrench, ShieldAlert } from 'lucide-react';
+import { Briefcase, AlertTriangle, Clock, Clock4, FileText, BarChart3, Wrench, ShieldAlert, Building2 } from 'lucide-react';
 
 interface PendingWorksReportProps {
   tasks: MaintenanceTask[];
@@ -132,7 +132,7 @@ export const PendingWorksReport: React.FC<PendingWorksReportProps> = ({ tasks })
         {/* 2. Department Breakdown Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Building2Icon className="w-5 h-5 text-blue-500" />
+            <Building2 className="w-5 h-5 text-blue-500" />
             Department Breakdown
           </h3>
           <div className="overflow-x-auto">
@@ -340,33 +340,3 @@ export const PendingWorksReport: React.FC<PendingWorksReportProps> = ({ tasks })
     </div>
   );
 };
-
-// Helper component since Building2 from lucide-react was used but not imported
-function Building2Icon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
-      <path d="M9 22v-4h6v4" />
-      <path d="M8 6h.01" />
-      <path d="M16 6h.01" />
-      <path d="M12 6h.01" />
-      <path d="M12 10h.01" />
-      <path d="M12 14h.01" />
-      <path d="M16 10h.01" />
-      <path d="M16 14h.01" />
-      <path d="M8 10h.01" />
-      <path d="M8 14h.01" />
-    </svg>
-  );
-}
