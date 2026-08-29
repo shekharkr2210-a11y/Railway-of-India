@@ -113,7 +113,7 @@ export const NationalOverview: React.FC<NationalOverviewProps> = ({
         </div>
 
         {/* Zones Grid Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4.5">
           {sortedZones.map((zone, index) => {
             const isSelected = selectedZone === zone.code;
 

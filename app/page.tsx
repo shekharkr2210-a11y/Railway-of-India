@@ -276,8 +276,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Main Dashboard Container */}
-      <main className="flex-1 px-6 py-6 max-w-7xl mx-auto w-full">
+      {/* Main Dashboard Container - Expanded Wide View */}
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 w-full max-w-[1850px] mx-auto">
         {/* Dynamic Tab Views */}
         {activeTab === 'NATIONAL' && (
           <div>
