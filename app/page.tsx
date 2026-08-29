@@ -16,6 +16,7 @@ import { LoginPage } from './components/LoginPage';
 import { PendingWorksReport } from './components/PendingWorksReport';
 import { PreventiveMaintenancePanel } from './components/PreventiveMaintenancePanel';
 import { WhatIfSimulator } from './components/WhatIfSimulator';
+import { SettingsPanel } from './components/SettingsPanel';
 import { recalculateTasksWithWhatIf } from './lib/mlEngine';
 import { 
   ZONAL_RAILWAYS,
@@ -27,14 +28,14 @@ import {
 import { generateOptimizedBlocks } from './lib/optimizer';
 import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, UserRole, WhatIfScenario } from './lib/types';
 import { INITIAL_AUDIT_LOGS, INITIAL_SECURITY_STATUS, generateDigitalSignature, AuditLogEntry } from './lib/security';
-import { runServerOptimization, postBackendBdmsSanction } from './lib/apiClient';
+import { runServerOptimization, postBackendBdmsSanction, fetchCurrentUser, logoutUser } from './lib/apiClient';
 import { Sparkles } from 'lucide-react';
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<string>('');
   const [horizon, setHorizon] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
-  const [activeTab, setActiveTab] = useState<'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES'>('NATIONAL');
+  const [activeTab, setActiveTab] = useState<'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'SETTINGS'>('NATIONAL');
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
   // Enterprise Scope & Role State
@@ -112,7 +113,16 @@ export default function Home() {
 
   // Run AI Optimization on Mount or Scope Change
   useEffect(() => {
-    runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, tasks);
+    let isMounted = true;
+    const execute = async () => {
+      if (isMounted) {
+        await runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, tasks);
+      }
+    };
+    execute();
+    return () => {
+      isMounted = false;
+    };
   }, [horizon, scopeLevel, selectedZone, selectedDivision, runOptimization, tasks]);
 
   const handleManualOptimize = () => {
@@ -202,6 +212,22 @@ export default function Home() {
     }
   };
 
+  // Check active session on initial mount
+  useEffect(() => {
+    fetchCurrentUser().then(user => {
+      if (user) {
+        setIsAuthenticated(true);
+        setLoggedInUser(user.name);
+        setUserRole(user.role);
+        if (user.zoneCode) setSelectedZone(user.zoneCode);
+        if (user.divisionCode) setSelectedDivision(user.divisionCode);
+        if (user.role === 'BOARD_HQ') setScopeLevel('NATIONAL');
+        else if (user.role === 'ZONAL_GM') setScopeLevel('ZONE');
+        else if (user.role === 'DIVISIONAL_DRM' || user.role === 'SECTION_CONTROLLER') setScopeLevel('DIVISION');
+      }
+    });
+  }, []);
+
   const filteredSections = INITIAL_CORRIDOR_SECTIONS.filter(s => {
     if (scopeLevel === 'ZONE' && selectedZone !== 'ALL') return s.zoneCode === selectedZone;
     if (scopeLevel === 'DIVISION' && selectedDivision !== 'ALL') return s.divisionCode === selectedDivision;
@@ -213,10 +239,33 @@ export default function Home() {
     if (scopeLevel === 'DIVISION' && selectedDivision !== 'ALL') return t.divisionCode === selectedDivision;
     return true;
   });
+  
   const handleLogin = (role: UserRole, username: string) => {
     setUserRole(role);
     setLoggedInUser(username);
     setIsAuthenticated(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch {
+      // Ignore
+    }
+    const newLog: AuditLogEntry = {
+      id: `LOG-${Math.floor(8800 + Math.random() * 1000)}`,
+      timestamp: new Date().toLocaleTimeString(),
+      action: 'AUTH_LOGOUT',
+      userRole: `${userRole}`,
+      ipAddress: '10.200.4.12 (Portal Signout)',
+      status: 'SUCCESS',
+      digitalSignature: generateDigitalSignature(`OUT-${Date.now()}`, {}),
+      details: `User ${loggedInUser || userRole} signed out of the Indian Railways AI Block Planner.`,
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
+    setIsAuthenticated(false);
+    setLoggedInUser('');
+    setToastMessage('👋 You have been securely logged out of Indian Railways Portal.');
   };
 
   // Auth Gate: Show login page if not authenticated
@@ -244,6 +293,8 @@ export default function Home() {
         setUserRole={setUserRole}
         zones={ZONAL_RAILWAYS}
         divisions={DIVISIONAL_UNITS}
+        loggedInUser={loggedInUser}
+        onLogout={handleLogout}
       />
 
       {/* Floating Notification Toast */}
@@ -371,6 +422,12 @@ export default function Home() {
         {activeTab === 'PM_CYCLES' && (
           <div>
             <PreventiveMaintenancePanel sections={filteredSections} tasks={filteredTasks} />
+          </div>
+        )}
+
+        {activeTab === 'SETTINGS' && (
+          <div>
+            <SettingsPanel userRole={userRole} onHorizonChange={setHorizon} />
           </div>
         )}
       </main>

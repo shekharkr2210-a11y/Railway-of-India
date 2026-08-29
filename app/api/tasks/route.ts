@@ -5,8 +5,9 @@ import { calculateMLCriticality } from '@/app/lib/mlEngine';
 import { INITIAL_CORRIDOR_SECTIONS } from '@/app/lib/mockData';
 import { taskSchema } from '@/app/lib/validation';
 import { requireRole, isWithinScope, logAudit } from '@/app/lib/auth';
+import type { UserRole } from '@/app/lib/types';
 
-const MUTATION_ROLES = ['BOARD_HQ', 'ZONAL_GM', 'DIVISIONAL_DRM'] as const;
+const MUTATION_ROLES: UserRole[] = ['BOARD_HQ', 'ZONAL_GM', 'DIVISIONAL_DRM'];
 
 export async function GET(request: NextRequest) {
   const authed = requireRole(request, ['BOARD_HQ', 'ZONAL_GM', 'DIVISIONAL_DRM', 'SECTION_CONTROLLER']);

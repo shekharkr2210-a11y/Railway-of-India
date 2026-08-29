@@ -10,6 +10,21 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('A valid registered email address is required'),
+});
+
+export const verifyOtpSchema = z.object({
+  email: z.string().email('A valid email address is required'),
+  otp: z.string().length(6, 'OTP must be exactly 6 digits').regex(/^\d{6}$/, 'OTP must contain numbers only'),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email('A valid email address is required'),
+  otp: z.string().length(6, 'OTP must be exactly 6 digits').regex(/^\d{6}$/, 'OTP must contain numbers only'),
+  newPassword: z.string().min(4, 'Password must be at least 4 characters long'),
+});
+
 export const horizonEnum = z.enum(['DAILY', 'WEEKLY', 'MONTHLY']);
 export const scopeEnum = z.enum(['NATIONAL', 'ZONE', 'DIVISION']);
 export const departmentEnum = z.enum(['ENG', 'TRD', 'SMMS']);
@@ -56,12 +71,12 @@ export const updateTaskSchema = z.object({
 
 export const sanctionSchema = z.object({
   blockId: z.string().min(1),
-  payload: z.record(z.unknown()).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const verifySchema = z.object({
   blockId: z.string().min(1),
-  payload: z.record(z.unknown()).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
   signature: z.string().min(1),
 });
 

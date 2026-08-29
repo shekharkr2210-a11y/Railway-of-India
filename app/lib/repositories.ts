@@ -31,6 +31,57 @@ export const usersRepo = {
   findById(id: string): UserRow | undefined {
     return db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined;
   },
+  updatePassword(email: string, passwordHash: string): boolean {
+    const result = db.prepare('UPDATE users SET password_hash = ? WHERE email = ?').run(passwordHash, email);
+    return result.changes > 0;
+  },
+};
+
+// ---------- Password Reset OTPs ----------
+
+export interface OtpRow {
+  id: string;
+  email: string;
+  otp_code: string;
+  expires_at: string;
+  is_used: number;
+  created_at: string;
+}
+
+export const otpRepo = {
+  create(email: string, otpCode: string, ttlMinutes = 10): OtpRow {
+    const id = `OTP-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
+    const createdAt = new Date().toISOString();
+    
+    // Invalidate prior unused OTPs for this email
+    db.prepare('UPDATE password_reset_otps SET is_used = 1 WHERE email = ? AND is_used = 0').run(email);
+
+    db.prepare(
+      `INSERT INTO password_reset_otps (id, email, otp_code, expires_at, is_used, created_at)
+       VALUES (?, ?, ?, ?, 0, ?)`
+    ).run(id, email, otpCode, expiresAt, createdAt);
+
+    return { id, email, otp_code: otpCode, expires_at: expiresAt, is_used: 0, created_at: createdAt };
+  },
+  verify(email: string, otpCode: string): { valid: boolean; error?: string; otpId?: string } {
+    const row = db
+      .prepare('SELECT * FROM password_reset_otps WHERE email = ? AND otp_code = ? AND is_used = 0 ORDER BY created_at DESC LIMIT 1')
+      .get(email, otpCode) as OtpRow | undefined;
+
+    if (!row) {
+      return { valid: false, error: 'Invalid or expired OTP code' };
+    }
+
+    if (new Date(row.expires_at).getTime() < Date.now()) {
+      return { valid: false, error: 'OTP has expired. Please request a new verification code.' };
+    }
+
+    return { valid: true, otpId: row.id };
+  },
+  markUsed(otpId: string): void {
+    db.prepare('UPDATE password_reset_otps SET is_used = 1 WHERE id = ?').run(otpId);
+  },
 };
 
 // ---------- Audit logs ----------

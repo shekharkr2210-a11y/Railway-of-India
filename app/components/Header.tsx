@@ -20,7 +20,9 @@ import {
   AlertCircle,
   Mail,
   User,
-  LogIn
+  LogIn,
+  LogOut,
+  Settings
 } from 'lucide-react';
 import { ScopeLevel, UserRole, ZonalRailway, DivisionalUnit } from '../lib/types';
 
@@ -29,8 +31,8 @@ interface HeaderProps {
   setHorizon: (horizon: 'DAILY' | 'WEEKLY' | 'MONTHLY') => void;
   onRunOptimizer: () => void;
   isOptimizing: boolean;
-  activeTab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES';
-  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES') => void;
+  activeTab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'SETTINGS';
+  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'SETTINGS') => void;
   scopeLevel: ScopeLevel;
   setScopeLevel: (scope: ScopeLevel) => void;
   selectedZone: string;
@@ -41,6 +43,8 @@ interface HeaderProps {
   setUserRole: (role: UserRole) => void;
   zones: ZonalRailway[];
   divisions: DivisionalUnit[];
+  loggedInUser?: string;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -60,6 +64,8 @@ export const Header: React.FC<HeaderProps> = ({
   setUserRole,
   zones,
   divisions,
+  loggedInUser,
+  onLogout,
 }) => {
   // Filter divisions to only show those belonging to the selected Zone (or all if ALL is selected)
   const availableDivisions = selectedZone === 'ALL'
@@ -242,15 +248,25 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* User Persona Switcher & Security Status */}
         <div className="flex items-center gap-3">
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center gap-1">
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 hidden sm:flex items-center gap-1">
             <Lock className="w-3 h-3 text-emerald-600" />
             TLS 1.3 mTLS Secured
           </span>
 
+          {/* Active User Badge */}
+          {loggedInUser && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50/80 border border-blue-200 rounded-lg text-xs">
+              <User className="w-3.5 h-3.5 text-blue-700" />
+              <span className="font-bold text-blue-950 max-w-[150px] truncate" title={loggedInUser}>
+                {loggedInUser}
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <span className="text-gray-500 font-medium flex items-center gap-1">
               <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-              Persona Role:
+              Role:
             </span>
             <select
               value={userRole}
@@ -263,6 +279,18 @@ export const Header: React.FC<HeaderProps> = ({
               <option value="SECTION_CONTROLLER">Section Traffic Controller</option>
             </select>
           </div>
+
+          {/* Sign Out Button */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              title="Sign Out of Indian Railways Portal"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-all cursor-pointer shadow-sm"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -468,6 +496,18 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <RefreshCw className="w-3.5 h-3.5" />
           🔄 PM Cycles
+        </button>
+
+        <button
+          onClick={() => setActiveTab('SETTINGS')}
+          className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ml-auto ${
+            activeTab === 'SETTINGS'
+              ? 'bg-blue-600 text-white font-bold shadow-sm'
+              : 'text-gray-700 bg-gray-100 hover:text-gray-900 hover:bg-gray-200 border border-gray-300'
+          }`}
+        >
+          <Settings className="w-3.5 h-3.5" />
+          <span>⚙️ System Settings</span>
         </button>
       </div>
 
