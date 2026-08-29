@@ -33,6 +33,7 @@ import { Sparkles } from 'lucide-react';
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [loggedInUser, setLoggedInUser] = useState<string>('');
   const [horizon, setHorizon] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [activeTab, setActiveTab] = useState<'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'SETTINGS'>('NATIONAL');
@@ -224,7 +225,23 @@ export default function Home() {
         if (user.role === 'BOARD_HQ') setScopeLevel('NATIONAL');
         else if (user.role === 'ZONAL_GM') setScopeLevel('ZONE');
         else if (user.role === 'DIVISIONAL_DRM' || user.role === 'SECTION_CONTROLLER') setScopeLevel('DIVISION');
+      } else {
+        try {
+          const isSaved = localStorage.getItem('railway_logged_in');
+          const savedRole = localStorage.getItem('railway_saved_role') as UserRole | null;
+          const savedName = localStorage.getItem('railway_saved_name');
+          if (isSaved === '1' && savedRole) {
+            setIsAuthenticated(true);
+            setUserRole(savedRole);
+            if (savedName) setLoggedInUser(savedName);
+          }
+        } catch {
+          // Ignore
+        }
       }
+      setAuthLoading(false);
+    }).catch(() => {
+      setAuthLoading(false);
     });
   }, []);
 
@@ -241,12 +258,25 @@ export default function Home() {
   });
   
   const handleLogin = (role: UserRole, username: string) => {
+    try {
+      localStorage.setItem('railway_logged_in', '1');
+      localStorage.setItem('railway_saved_role', role);
+      localStorage.setItem('railway_saved_name', username);
+    } catch {
+      // Ignore
+    }
     setUserRole(role);
     setLoggedInUser(username);
     setIsAuthenticated(true);
   };
 
   const handleLogout = async () => {
+    try {
+      localStorage.removeItem('railway_logged_in');
+      localStorage.removeItem('railway_saved_name');
+    } catch {
+      // Ignore
+    }
     try {
       await logoutUser();
     } catch {
@@ -267,6 +297,16 @@ export default function Home() {
     setLoggedInUser('');
     setToastMessage('👋 You have been securely logged out of Indian Railways Portal.');
   };
+
+  // Auth Loading Gate
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white font-sans">
+        <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-xs font-mono text-blue-200">Loading Indian Railways AI Block Planner...</p>
+      </div>
+    );
+  }
 
   // Auth Gate: Show login page if not authenticated
   if (!isAuthenticated) {
