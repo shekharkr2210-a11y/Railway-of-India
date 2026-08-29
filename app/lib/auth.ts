@@ -46,7 +46,7 @@ export function clearSessionCookie(response: NextResponse): void {
 /** Returns the authenticated session, or a 401/403 NextResponse to return from the route. */
 export function requireRole(
   request: NextRequest,
-  allowed: UserRole[]
+  allowed: readonly UserRole[] | UserRole[]
 ): AuthResult | NextResponse {
   const session = getSessionFromRequest(request);
   if (!session) {

@@ -56,12 +56,12 @@ export const updateTaskSchema = z.object({
 
 export const sanctionSchema = z.object({
   blockId: z.string().min(1),
-  payload: z.record(z.unknown()).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const verifySchema = z.object({
   blockId: z.string().min(1),
-  payload: z.record(z.unknown()).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
   signature: z.string().min(1),
 });
 

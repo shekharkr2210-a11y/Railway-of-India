@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { BlockWindow, MaintenanceTask } from '../lib/types';
-import { generateDigitalSignature } from '../lib/security';
+import { generateClientSignature } from '../lib/clientSecurity';
 import { 
   CheckCircle2, 
   Clock, 
@@ -19,7 +19,9 @@ import {
   FileText,
   Building2,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Copy,
+  Check
 } from 'lucide-react';
 import { BlockCircularModal } from './BlockCircularModal';
 
@@ -39,6 +41,7 @@ export const BDMSWorkflow: React.FC<BDMSWorkflowProps> = ({
   const [rejectModalBlockId, setRejectModalBlockId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('Train headway congestion during peak evening freight movement');
   const [circularModalBlock, setCircularModalBlock] = useState<BlockWindow | null>(null);
+  const [copiedSigBlockId, setCopiedSigBlockId] = useState<string | null>(null);
 
   const handleApprove = (id: string) => {
     setApprovedIds(prev => new Set(prev).add(id));
@@ -50,11 +53,28 @@ export const BDMSWorkflow: React.FC<BDMSWorkflowProps> = ({
     onApproveBlock(id);
   };
 
+  const handleApproveAll = () => {
+    blocks.forEach(block => {
+      if (!approvedIds.has(block.id) && block.bdmsStatus !== 'APPROVED') {
+        handleApprove(block.id);
+      }
+    });
+  };
+
+  const handleCopySig = (sig: string, blockId: string) => {
+    navigator.clipboard?.writeText(sig);
+    setCopiedSigBlockId(blockId);
+    setTimeout(() => setCopiedSigBlockId(null), 2000);
+  };
+
   const handleRejectConfirm = () => {
     if (!rejectModalBlockId) return;
     setRejectedIds(prev => new Map(prev).set(rejectModalBlockId, rejectReason));
     setRejectModalBlockId(null);
   };
+
+  const pendingCount = blocks.filter(b => !approvedIds.has(b.id) && b.bdmsStatus !== 'APPROVED').length;
+  const approvedCount = blocks.filter(b => approvedIds.has(b.id) || b.bdmsStatus === 'APPROVED').length;
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xl mb-6 backdrop-blur-xl">
@@ -70,9 +90,21 @@ export const BDMSWorkflow: React.FC<BDMSWorkflowProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          Zero Trust Cryptographic Verification Active
+        <div className="flex items-center gap-3">
+          {pendingCount > 0 && (
+            <button
+              onClick={handleApproveAll}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              ⚡ Quick Sanction All ({pendingCount} Blocks)
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            {approvedCount > 0 ? `${approvedCount}/${blocks.length} Cryptographically Signed` : 'Zero Trust Active'}
+          </div>
         </div>
       </div>
 
@@ -122,7 +154,8 @@ export const BDMSWorkflow: React.FC<BDMSWorkflowProps> = ({
           const isApproved = approvedIds.has(block.id) || block.bdmsStatus === 'APPROVED';
           const isRejected = rejectedIds.has(block.id);
           const rejectionText = rejectedIds.get(block.id);
-          const hmacSig = generateDigitalSignature(block.id, { depts: block.participatingDepartments, duration: block.durationHours });
+          const hmacSig = generateClientSignature(block.id, { depts: block.participatingDepartments, duration: block.durationHours });
+          const isCopied = copiedSigBlockId === block.id;
 
           return (
             <div
@@ -240,9 +273,18 @@ export const BDMSWorkflow: React.FC<BDMSWorkflowProps> = ({
 
               {/* Cryptographic Hash Signature */}
               {isApproved && (
-                <div className="mb-3 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[10px] font-mono text-emerald-900 flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="truncate">{hmacSig}</span>
+                <div className="mb-3 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[10px] font-mono text-emerald-900 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Key className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="truncate">{hmacSig}</span>
+                  </div>
+                  <button
+                    onClick={() => handleCopySig(hmacSig, block.id)}
+                    className="p-1 rounded hover:bg-emerald-100 text-emerald-700 shrink-0 transition-colors"
+                    title="Copy HMAC SHA-256 Signature"
+                  >
+                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
               )}
 

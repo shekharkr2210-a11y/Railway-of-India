@@ -15,7 +15,7 @@ import {
   Building2,
   Calendar
 } from 'lucide-react';
-import { generateDigitalSignature } from '../lib/security';
+import { generateClientSignature } from '../lib/clientSecurity';
 
 interface BlockCircularModalProps {
   block: BlockWindow | null;
@@ -31,7 +31,7 @@ export const BlockCircularModal: React.FC<BlockCircularModalProps> = ({
   if (!block) return null;
 
   const relevantTasks = tasks.filter(t => block.taskIds.includes(t.id));
-  const hmacSig = generateDigitalSignature(block.id, { depts: block.participatingDepartments, duration: block.durationHours });
+  const hmacSig = generateClientSignature(block.id, { depts: block.participatingDepartments, duration: block.durationHours });
   const circularNumber = `IR/${block.zoneCode}/${block.divisionCode}/OPT-BLOCK/2026/${block.id.replace('BLK-', '')}`;
   const todayStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 

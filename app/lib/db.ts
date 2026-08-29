@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import Database, { type Database as DatabaseInstance } from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -7,7 +7,7 @@ import path from 'node:path';
  * Schema is owned here; migrations are idempotent and applied lazily on first use.
  */
 
-let instance: Database.Database | null = null;
+let instance: DatabaseInstance | null = null;
 
 export function resolveDbPath(): string {
   if (process.env.DB_PATH) return process.env.DB_PATH;
@@ -65,7 +65,7 @@ CREATE INDEX IF NOT EXISTS idx_blocks_date ON block_windows(scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_logs(timestamp);
 `;
 
-export function runMigrations(db: Database.Database): void {
+export function runMigrations(db: DatabaseInstance): void {
   db.exec(
     'CREATE TABLE IF NOT EXISTS schema_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, applied_at TEXT NOT NULL);'
   );
@@ -83,7 +83,7 @@ export function runMigrations(db: Database.Database): void {
   }
 }
 
-export function getDb(): Database.Database {
+export function getDb(): DatabaseInstance {
   if (instance) return instance;
   const db = new Database(resolveDbPath());
   db.pragma('journal_mode = WAL');

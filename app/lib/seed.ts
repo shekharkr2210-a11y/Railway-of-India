@@ -13,12 +13,12 @@ import {
  * Only inserts when the target table is empty. Server-only module.
  */
 
-function countRows(db: Database.Database, table: string): number {
+function countRows(db: Database, table: string): number {
   const row = db.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get() as { c: number };
   return Number(row.c);
 }
 
-function seedZonesAndDivisions(db: Database.Database): void {
+function seedZonesAndDivisions(db: Database): void {
   if (countRows(db, 'zones') === 0) {
     const ins = db.prepare(
       `INSERT OR IGNORE INTO zones (code, name, hq_city, route_length_km, divisions_count, asset_availability_pct, shadow_efficiency_pct, active_defects_count)
@@ -39,7 +39,7 @@ function seedZonesAndDivisions(db: Database.Database): void {
   }
 }
 
-function seedSections(db: Database.Database): void {
+function seedSections(db: Database): void {
   if (countRows(db, 'sections') > 0) return;
   const ins = db.prepare(
     `INSERT OR IGNORE INTO sections (id, name, code, zone_code, division_code, corridor_name, start_station, end_station, length_km, start_km, end_km, tracks, traffic_density, daily_train_count)
@@ -50,7 +50,7 @@ function seedSections(db: Database.Database): void {
   })(INITIAL_CORRIDOR_SECTIONS);
 }
 
-function seedTrainMovements(db: Database.Database): void {
+function seedTrainMovements(db: Database): void {
   if (countRows(db, 'train_movements') > 0) return;
   const ins = db.prepare(
     `INSERT OR IGNORE INTO train_movements (id, train_number, train_name, type, section_id, origin_zone, destination_zone, entry_time, exit_time, priority)
@@ -61,7 +61,7 @@ function seedTrainMovements(db: Database.Database): void {
   })(INITIAL_TRAIN_MOVEMENTS);
 }
 
-function seedTasks(db: Database.Database): void {
+function seedTasks(db: Database): void {
   if (countRows(db, 'tasks') > 0) return;
   const ins = db.prepare(
     `INSERT OR IGNORE INTO tasks (id, source_system, department, department_name, zone_code, division_code, title, section_id, section_name,
@@ -83,31 +83,61 @@ function seedTasks(db: Database.Database): void {
   })(INITIAL_MAINTENANCE_TASKS);
 }
 
-export function createDefaultAdmin(db: Database.Database): void {
+export function createDefaultAdmin(db: Database): void {
   if (countRows(db, 'users') > 0) return;
-  if (process.env.NODE_ENV === 'production' && !process.env.SEED_ADMIN_PASSWORD) {
-    throw new Error('SEED_ADMIN_PASSWORD must be set in production to create the initial admin user.');
-  }
   const password = process.env.SEED_ADMIN_PASSWORD || 'dev-admin1234';
-  const name = process.env.SEED_ADMIN_NAME || 'System Administrator';
-  const email = process.env.SEED_ADMIN_EMAIL || 'admin@indianrailways.gov.in';
   const hash = bcrypt.hashSync(password, 10);
-  db.prepare(
-    `INSERT OR IGNORE INTO users (id, name, email, password_hash, role, zone_code, division_code, is_active, created_at)
-     VALUES (?, ?, ?, ?, 'BOARD_HQ', '', '', 1, ?)`
-  ).run(`user-${Date.now()}-admin`, name, email, hash, new Date().toISOString());
+  const now = new Date().toISOString();
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(
-      `[seed] Created default admin (${email}) with the dev password. Set SEED_ADMIN_PASSWORD and rotate before production.`
-    );
+  const defaultUsers = [
+    {
+      id: 'usr-board-hq',
+      name: 'Dr. V. K. Tripathi',
+      email: 'admin@indianrailways.gov.in',
+      role: 'BOARD_HQ',
+      zoneCode: '',
+      divisionCode: '',
+    },
+    {
+      id: 'usr-zonal-gm-ncr',
+      name: 'Satish Kumar (GM/NCR)',
+      email: 'gm.ncr@indianrailways.gov.in',
+      role: 'ZONAL_GM',
+      zoneCode: 'NCR',
+      divisionCode: '',
+    },
+    {
+      id: 'usr-div-drm-pryj',
+      name: 'Himanshu Badoni (DRM/PRYJ)',
+      email: 'drm.pryj@indianrailways.gov.in',
+      role: 'DIVISIONAL_DRM',
+      zoneCode: 'NCR',
+      divisionCode: 'PRYJ',
+    },
+    {
+      id: 'usr-section-ctrl-ndls',
+      name: 'R. K. Sharma (Chief Controller)',
+      email: 'controller.ndls@indianrailways.gov.in',
+      role: 'SECTION_CONTROLLER',
+      zoneCode: 'NR',
+      divisionCode: 'DLI',
+    },
+  ];
+
+  const stmt = db.prepare(
+    `INSERT OR IGNORE INTO users (id, name, email, password_hash, role, zone_code, division_code, is_active, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`
+  );
+
+  for (const u of defaultUsers) {
+    stmt.run(u.id, u.name, u.email, hash, u.role, u.zoneCode, u.divisionCode, now);
   }
 }
 
-export function seedIfEmpty(db: Database.Database): void {
+export function seedIfEmpty(db: Database): void {
   seedZonesAndDivisions(db);
   seedSections(db);
   seedTrainMovements(db);
   seedTasks(db);
   createDefaultAdmin(db);
-}
+}

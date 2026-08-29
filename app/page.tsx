@@ -26,7 +26,8 @@ import {
 } from './lib/mockData';
 import { generateOptimizedBlocks } from './lib/optimizer';
 import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, UserRole, WhatIfScenario } from './lib/types';
-import { INITIAL_AUDIT_LOGS, INITIAL_SECURITY_STATUS, generateDigitalSignature, AuditLogEntry } from './lib/security';
+import { INITIAL_AUDIT_LOGS, INITIAL_SECURITY_STATUS, AuditLogEntry } from './lib/security';
+import { generateClientSignature } from './lib/clientSecurity';
 import { runServerOptimization, postBackendBdmsSanction } from './lib/apiClient';
 import { Sparkles } from 'lucide-react';
 
@@ -92,7 +93,7 @@ export default function Home() {
           userRole: `${userRole} (${currentScope})`,
           ipAddress: '10.200.4.12 (RailTel Secure Backend API)',
           status: 'SUCCESS',
-          digitalSignature: generateDigitalSignature(`OPT-${Date.now()}`, { scope: currentScope, saved: response.metrics.downtimeHoursSaved }),
+          digitalSignature: generateClientSignature(`OPT-${Date.now()}`, { scope: currentScope, saved: response.metrics.downtimeHoursSaved }),
           details: `Backend REST API /api/optimize ran across ${scopeLabel}. Saved ${response.metrics.downtimeHoursSaved} hrs track downtime.`,
         };
         setAuditLogs(prev => [newLog, ...prev]);
@@ -182,7 +183,7 @@ export default function Home() {
         userRole: `${userRole}`,
         ipAddress: '10.142.12.89 (mTLS Encrypted Link)',
         status: 'SUCCESS',
-        digitalSignature: apiResponse.digitalSignature || generateDigitalSignature(blockId, {}),
+        digitalSignature: apiResponse.digitalSignature || generateClientSignature(blockId, {}),
         details: `Backend API /api/bdms/sanction cryptographically signed & approved ${blockId}.`,
       };
       setAuditLogs(prev => [newLog, ...prev]);
