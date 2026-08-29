@@ -22,43 +22,7 @@ export interface SecurityStatus {
   auditLogCount: number;
   latestAuditEventAt: string | null;
   sessionCookieName: string;
-  activeThreatsBlockedCount?: number;
-  wafStatus?: string;
-  rateLimiterState?: string;
 }
-
-export const INITIAL_SECURITY_STATUS: SecurityStatus = {
-  dbConnected: true,
-  auditLogCount: 1420,
-  latestAuditEventAt: '2026-08-29T18:00:00.000Z',
-  sessionCookieName: 'railway_session',
-  activeThreatsBlockedCount: 142,
-  wafStatus: 'Active & Enforcing (Level 5)',
-  rateLimiterState: '120 req/min (Normal)',
-};
-
-export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
-  {
-    id: 'LOG-9481',
-    timestamp: '18:45:12',
-    action: 'AI_OPTIMIZER_EXECUTION',
-    userRole: 'BOARD_HQ (NATIONAL)',
-    ipAddress: '10.200.4.12 (RailTel Secure)',
-    status: 'SUCCESS',
-    digitalSignature: 'HMAC-SHA256:7B8F9A02C1E3D4',
-    details: 'AI Optimizer ran across All 18 Zonal Railways. 42 blocks scheduled.',
-  },
-  {
-    id: 'LOG-9480',
-    timestamp: '18:30:00',
-    action: 'BDMS_BLOCK_SANCTION',
-    userRole: 'DIVISIONAL_DRM (LJN)',
-    ipAddress: '10.142.12.89 (mTLS Link)',
-    status: 'SUCCESS',
-    digitalSignature: 'HMAC-SHA256:4C82E19A80B7F3',
-    details: 'Block Window BLK-NER-LJN-001 approved and cryptographically signed.',
-  },
-];
 
 export function getHmacSecret(): string {
   const secret = process.env.HMAC_SECRET_KEY;

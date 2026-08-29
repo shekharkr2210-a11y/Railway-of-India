@@ -7,15 +7,7 @@ import { SESSION_COOKIE, verifySessionToken } from './app/lib/session';
  * NOTE: only pure-crypto helpers (lib/session) may run here — never open the DB.
  */
 
-const PUBLIC_API_PATHS = new Set([
-  '/api/auth/login',
-  '/api/auth/logout',
-  '/api/auth/me',
-  '/api/auth/forgot-password',
-  '/api/auth/verify-otp',
-  '/api/auth/reset-password',
-  '/api/health',
-]);
+const PUBLIC_API_PATHS = new Set(['/api/auth/login', '/api/auth/logout', '/api/health']);
 
 // Simple in-memory sliding token bucket (single-node safety net; move to Redis for scale-out).
 const buckets = new Map<string, { tokens: number; last: number }>();
@@ -39,12 +31,7 @@ export function proxy(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
 
   // Static assets and public auth/health endpoints pass through.
-  if (
-    pathname.startsWith('/_next/') ||
-    pathname.startsWith('/public') ||
-    pathname.includes('.') ||
-    PUBLIC_API_PATHS.has(pathname)
-  ) {
+  if (pathname.startsWith('/_next/') || pathname.startsWith('/public') || PUBLIC_API_PATHS.has(pathname)) {
     return NextResponse.next();
   }
 
@@ -67,20 +54,20 @@ export function proxy(request: NextRequest) {
     return response;
   }
 
-  const session = verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
-
-  // When visiting /login
-  if (pathname === '/login') {
-    if (session) {
+  // Page routes: everything except /login requires a session.
+  if (pathname === '/login' || pathname === '/') {
+    const session = verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
+    if (pathname === '/' && !session) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    if (pathname === '/login' && session) {
       return NextResponse.redirect(new URL('/', request.url));
     }
-    return NextResponse.next();
   }
 
-  // When visiting protected page routes (e.g. /)
+  const session = verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
-
   return NextResponse.next();
 }

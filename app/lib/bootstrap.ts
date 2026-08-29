@@ -8,7 +8,7 @@ import { getDb } from './db';
 
 let ready = false;
 
-export function ensureBootstrapped(): Database {
+export function ensureBootstrapped(): Database.Database {
   const db = getDb();
   if (ready) return db;
   // Lazy import to avoid a module-init cycle (seed.ts imports getDb()).

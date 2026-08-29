@@ -59,14 +59,10 @@ CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
   role TEXT NOT NULL, zone_code TEXT, division_code TEXT, is_active INTEGER DEFAULT 1, created_at TEXT NOT NULL
 );
-CREATE TABLE IF NOT EXISTS password_reset_otps (
-  id TEXT PRIMARY KEY, email TEXT NOT NULL, otp_code TEXT NOT NULL, expires_at TEXT NOT NULL, is_used INTEGER DEFAULT 0, created_at TEXT NOT NULL
-);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_zone ON tasks(zone_code);
 CREATE INDEX IF NOT EXISTS idx_blocks_date ON block_windows(scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_logs(timestamp);
-CREATE INDEX IF NOT EXISTS idx_otps_email ON password_reset_otps(email);
 `;
 
 export function runMigrations(db: Database.Database): void {
@@ -81,20 +77,6 @@ export function runMigrations(db: Database.Database): void {
       db.exec(sql);
       db.prepare('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(
         '0001-initial-schema',
-        new Date().toISOString()
-      );
-    })();
-  }
-  if (!applied.has('0002-password-reset-otps')) {
-    db.transaction(() => {
-      db.exec(`
-        CREATE TABLE IF NOT EXISTS password_reset_otps (
-          id TEXT PRIMARY KEY, email TEXT NOT NULL, otp_code TEXT NOT NULL, expires_at TEXT NOT NULL, is_used INTEGER DEFAULT 0, created_at TEXT NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_otps_email ON password_reset_otps(email);
-      `);
-      db.prepare('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(
-        '0002-password-reset-otps',
         new Date().toISOString()
       );
     })();
