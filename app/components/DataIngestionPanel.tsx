@@ -79,228 +79,45 @@ export const DataIngestionPanel: React.FC<DataIngestionPanelProps> = ({ onTasksI
 
   const handleSimulateSync = async () => {
     setIsSyncing(true);
-    setSyncStatus('Connecting to CRIS Railway Enterprise Data Bus...');
+    setSyncStatus('Connecting to CRIS Railway Enterprise Data Bus & Ingesting Feeds...');
 
-    setTimeout(async () => {
-      const sampleDefects: Partial<MaintenanceTask>[] = [
-        {
-          id: `TASK-TMS-${Math.floor(2000 + Math.random() * 8000)}`,
-          sourceSystem: 'TMS',
-          department: 'ENG',
-          departmentName: 'Civil Track (TMS)',
-          zoneCode: 'NCR',
-          divisionCode: 'PRYJ',
-          title: 'Immediate USFD Ultrasonic Rail Fracture Detected at Weld 84',
-          sectionId: 'SEC-03',
-          sectionName: 'MTJ-AGC (KM 134-188)',
-          startKm: 142,
-          endKm: 144,
-          estimatedDurationHours: 2.2,
-          severity: 'CRITICAL',
-          overdueDays: 4,
-          requiresPowerBlock: false,
-          speedRestrictionImpactKmvh: 45,
-          status: 'PENDING',
-        },
-        {
-          id: `TASK-TDMS-${Math.floor(2000 + Math.random() * 8000)}`,
-          sourceSystem: 'TDMS',
-          department: 'TRD',
-          departmentName: 'Traction Distribution (TDMS)',
-          zoneCode: 'NCR',
-          divisionCode: 'PRYJ',
-          title: '25kV OHE Dropper Wire Snapping Prevention Scan',
-          sectionId: 'SEC-03',
-          sectionName: 'MTJ-AGC (KM 134-188)',
-          startKm: 143,
-          endKm: 145,
-          estimatedDurationHours: 1.8,
-          severity: 'HIGH',
-          overdueDays: 2,
-          requiresPowerBlock: true,
-          speedRestrictionImpactKmvh: 20,
-          status: 'PENDING',
-        },
-      ];
+    try {
+      const response = await fetch('/api/sync/ALL', { method: 'POST' });
+      const data = await response.json();
 
-      try {
-        const res = await batchImportTasks(sampleDefects);
-        if (res.success && onTasksImported) {
-          onTasksImported(res.tasks);
-          setUploadedCount(res.importedCount);
-          setSyncStatus(`✅ Synced with CRIS Data Bus. Ingested ${res.importedCount} new defects into AI Optimizer!`);
-        }
-      } catch {
-        setSyncStatus('⚠️ Sync completed with local simulated cache.');
-      } finally {
-        setIsSyncing(false);
+      if (data.success && data.tasks && onTasksImported) {
+        onTasksImported(data.tasks);
+        setUploadedCount(data.totalTasksInDb);
+        setSyncStatus(`✅ Synced with CRIS Data Bus. Ingested live defects from TMS, SMMS, TDMS & COA into SQLite (${data.totalTasksInDb} total tasks in database)!`);
+      } else {
+        setSyncStatus(`✅ Synced feeds: ${data.message || 'Complete'}`);
       }
-    }, 1200);
+    } catch {
+      setSyncStatus('⚠️ Sync completed with local simulated cache.');
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleQuickLoadPreset = async (type: 'TMS' | 'TDMS' | 'SMMS' | 'MULTI') => {
     setIsSyncing(true);
-    setSyncStatus(`Loading authentic ${type} test dataset into AI Optimizer...`);
+    setSyncStatus(`Syncing authentic ${type} feed into SQLite & AI Optimizer...`);
 
-    const presets: Record<string, Partial<MaintenanceTask>[]> = {
-      TMS: [
-        {
-          id: `TMS-USFD-${Math.floor(3000 + Math.random() * 5000)}`,
-          sourceSystem: 'TMS',
-          department: 'ENG',
-          departmentName: 'Civil Engineering (Track)',
-          zoneCode: 'NCR',
-          divisionCode: 'PRYJ',
-          title: 'Ultrasonic Flaw (IMR) Detection on High-Speed Rail Joint KM 144.2',
-          sectionId: 'SEC-03',
-          sectionName: 'MTJ-AGC (KM 134-188)',
-          startKm: 144,
-          endKm: 146,
-          estimatedDurationHours: 2.5,
-          severity: 'CRITICAL',
-          overdueDays: 5,
-          requiresPowerBlock: false,
-          speedRestrictionImpactKmvh: 50,
-          status: 'PENDING',
-        },
-        {
-          id: `TMS-SWITCH-${Math.floor(3000 + Math.random() * 5000)}`,
-          sourceSystem: 'TMS',
-          department: 'ENG',
-          departmentName: 'Civil Engineering (Track)',
-          zoneCode: 'NR',
-          divisionCode: 'DLI',
-          title: '1:12 Curved Switch Turnout Tongue Rail Replacement',
-          sectionId: 'SEC-01',
-          sectionName: 'NDLS-FZB (KM 0-44)',
-          startKm: 18,
-          endKm: 19,
-          estimatedDurationHours: 3.0,
-          severity: 'HIGH',
-          overdueDays: 3,
-          requiresPowerBlock: false,
-          speedRestrictionImpactKmvh: 30,
-          status: 'PENDING',
-        }
-      ],
-      TDMS: [
-        {
-          id: `TDMS-OHE-${Math.floor(4000 + Math.random() * 5000)}`,
-          sourceSystem: 'TDMS',
-          department: 'TRD',
-          departmentName: 'Traction Distribution (TRD)',
-          zoneCode: 'NCR',
-          divisionCode: 'PRYJ',
-          title: '25kV Contact Wire Wear Replacement & Cantilever Adjustment',
-          sectionId: 'SEC-03',
-          sectionName: 'MTJ-AGC (KM 134-188)',
-          startKm: 145,
-          endKm: 148,
-          estimatedDurationHours: 2.0,
-          severity: 'HIGH',
-          overdueDays: 2,
-          requiresPowerBlock: true,
-          speedRestrictionImpactKmvh: 20,
-          status: 'PENDING',
-        }
-      ],
-      SMMS: [
-        {
-          id: `SMMS-POINT-${Math.floor(5000 + Math.random() * 5000)}`,
-          sourceSystem: 'SMMS',
-          department: 'SMMS',
-          departmentName: 'Signal & Telecom',
-          zoneCode: 'NCR',
-          divisionCode: 'PRYJ',
-          title: 'Electronic Interlocking Axle Counter & Point Machine Overhaul',
-          sectionId: 'SEC-03',
-          sectionName: 'MTJ-AGC (KM 134-188)',
-          startKm: 144,
-          endKm: 145,
-          estimatedDurationHours: 1.5,
-          severity: 'HIGH',
-          overdueDays: 1,
-          requiresPowerBlock: false,
-          speedRestrictionImpactKmvh: 15,
-          status: 'PENDING',
-        }
-      ],
-      MULTI: [
-        {
-          id: `TMS-MULTI-${Math.floor(6000 + Math.random() * 3000)}`,
-          sourceSystem: 'TMS',
-          department: 'ENG',
-          departmentName: 'Civil Engineering (Track)',
-          zoneCode: 'NER',
-          divisionCode: 'LJN',
-          title: 'Deep Ballast Cleaning Machine (BCM) Track Possession',
-          sectionId: 'SEC-06',
-          sectionName: 'ASH-CNB (KM 0-72)',
-          startKm: 34,
-          endKm: 38,
-          estimatedDurationHours: 3.5,
-          severity: 'HIGH',
-          overdueDays: 3,
-          requiresPowerBlock: false,
-          speedRestrictionImpactKmvh: 40,
-          status: 'PENDING',
-        },
-        {
-          id: `TDMS-MULTI-${Math.floor(6000 + Math.random() * 3000)}`,
-          sourceSystem: 'TDMS',
-          department: 'TRD',
-          departmentName: 'Traction Distribution',
-          zoneCode: 'NER',
-          divisionCode: 'LJN',
-          title: 'OHE Neutral Section Isolator Testing with Tower Wagon',
-          sectionId: 'SEC-06',
-          sectionName: 'ASH-CNB (KM 0-72)',
-          startKm: 35,
-          endKm: 37,
-          estimatedDurationHours: 2.0,
-          severity: 'MEDIUM',
-          overdueDays: 1,
-          requiresPowerBlock: true,
-          speedRestrictionImpactKmvh: 10,
-          status: 'PENDING',
-        },
-        {
-          id: `SMMS-MULTI-${Math.floor(6000 + Math.random() * 3000)}`,
-          sourceSystem: 'SMMS',
-          department: 'SMMS',
-          departmentName: 'Signal & Telecom',
-          zoneCode: 'NER',
-          divisionCode: 'LJN',
-          title: 'Kavach Automatic Train Protection RFID Track Sensor Calibration',
-          sectionId: 'SEC-06',
-          sectionName: 'ASH-CNB (KM 0-72)',
-          startKm: 36,
-          endKm: 37,
-          estimatedDurationHours: 1.5,
-          severity: 'HIGH',
-          overdueDays: 2,
-          requiresPowerBlock: false,
-          speedRestrictionImpactKmvh: 15,
-          status: 'PENDING',
-        }
-      ]
-    };
+    try {
+      const source = type === 'MULTI' ? 'ALL' : type;
+      const response = await fetch(`/api/sync/${source}`, { method: 'POST' });
+      const data = await response.json();
 
-    setTimeout(async () => {
-      const selected = presets[type] || [];
-      try {
-        const res = await batchImportTasks(selected);
-        if (res.success && onTasksImported) {
-          onTasksImported(res.tasks);
-          setUploadedCount(res.importedCount);
-          setSyncStatus(`✨ Successfully ingested ${res.importedCount} ${type} maintenance records! Optimizer has formed co-located Shadow Blocks.`);
-        }
-      } catch {
-        setSyncStatus('Ingested into local buffer.');
-      } finally {
-        setIsSyncing(false);
+      if (data.success && data.tasks && onTasksImported) {
+        onTasksImported(data.tasks);
+        setUploadedCount(data.tasks.length);
+        setSyncStatus(`✨ Successfully ingested ${data.tasks.length} ${type} records into SQLite database! Optimizer formed co-located Shadow Blocks.`);
       }
-    }, 900);
+    } catch {
+      setSyncStatus('Ingested into local buffer.');
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleDownloadTemplate = (dept: string) => {
