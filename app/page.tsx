@@ -18,6 +18,7 @@ import { PreventiveMaintenancePanel } from './components/PreventiveMaintenancePa
 import { WhatIfSimulator } from './components/WhatIfSimulator';
 import { ModelPerformancePanel } from './components/ModelPerformancePanel';
 import { GoodsTrainForecastPanel } from './components/GoodsTrainForecastPanel';
+import { MachineUtilizationPanel } from './components/MachineUtilizationPanel';
 import { recalculateTasksWithWhatIf } from './lib/mlEngine';
 import { computeOptimizationMetrics } from './lib/metrics';
 import { 
@@ -28,7 +29,7 @@ import {
   INITIAL_TRAIN_MOVEMENTS 
 } from './lib/mockData';
 import { generateOptimizedBlocks } from './lib/optimizer';
-import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, UserRole, WhatIfScenario } from './lib/types';
+import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, UserRole, WhatIfScenario, SolverType } from './lib/types';
 import { INITIAL_AUDIT_LOGS, INITIAL_SECURITY_STATUS, AuditLogEntry, SecurityStatus } from './lib/security';
 import { generateClientSignature } from './lib/clientSecurity';
 import { runServerOptimization, postBackendBdmsSanction } from './lib/apiClient';
@@ -39,7 +40,7 @@ export default function Home() {
   const [loggedInUser, setLoggedInUser] = useState<string>('');
   const [horizon, setHorizon] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [activeTab, setActiveTab] = useState<
-    'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA'
+    'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA' | 'FLEET_CREW'
   >('NATIONAL');
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
@@ -187,11 +188,28 @@ export default function Home() {
     setToastMessage(`📥 Ingested ${newTasks.length} external defects from CRIS Data Bus! Re-optimizing...`);
   };
 
-  const handleApplyWhatIfScenario = (scenario: WhatIfScenario) => {
+  const handleApplyWhatIfScenario = (scenario: WhatIfScenario, solverType?: SolverType) => {
     const recalculated = recalculateTasksWithWhatIf(tasks, scenario, INITIAL_CORRIDOR_SECTIONS);
     setTasks(recalculated);
-    runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, recalculated);
-    setToastMessage(`⚡ What-If Simulation Applied (Monsoon: ${scenario.monsoonWeatherFactor}x, Freight Surge: +${scenario.freightTrafficSurgePercentage}%)! Recalibrated schedule.`);
+    if (solverType === 'PARETO_MULTI_OBJECTIVE') {
+      const result = generateOptimizedBlocks(
+        recalculated,
+        horizon,
+        scopeLevel,
+        selectedZone,
+        selectedDivision,
+        INITIAL_CORRIDOR_SECTIONS,
+        INITIAL_TRAIN_MOVEMENTS,
+        undefined,
+        'PARETO_MULTI_OBJECTIVE'
+      );
+      setBlocks(result.blocks);
+      setMetrics(result.metrics);
+      setToastMessage(`⚡ Pareto Multi-Objective Optimization Solved! Analyzed multi-attribute non-dominated candidates.`);
+    } else {
+      runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, recalculated);
+      setToastMessage(`⚡ What-If Simulation Applied (Monsoon: ${scenario.monsoonWeatherFactor}x, Freight Surge: +${scenario.freightTrafficSurgePercentage}%)! Recalibrated schedule.`);
+    }
   };
 
   const handleApproveBlock = async (blockId: string) => {
@@ -424,6 +442,12 @@ export default function Home() {
         {activeTab === 'FREIGHT_COA' && (
           <div>
             <GoodsTrainForecastPanel sections={filteredSections} />
+          </div>
+        )}
+
+        {activeTab === 'FLEET_CREW' && (
+          <div>
+            <MachineUtilizationPanel blocks={blocks} tasks={filteredTasks} horizon={horizon} />
           </div>
         )}
       </main>

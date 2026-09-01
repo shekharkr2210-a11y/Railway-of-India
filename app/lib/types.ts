@@ -105,6 +105,61 @@ export interface DivisionalUnit {
   activeTasksCount: number;
 }
 
+export type TrackDirection = 'UP_MAIN' | 'DN_MAIN' | 'THIRD_LINE' | 'BOTH_DIRECTIONS';
+
+export type SolverType = 'GREEDY_2OPT' | 'PARETO_MULTI_OBJECTIVE';
+
+export interface TSRStage {
+  dayNumber: number;
+  speedLimitKmph: number;
+  sectionalSpeedKmph: number;
+  addedDelayMinutesPerTrain: number;
+}
+
+export interface TSRRelaxationProfile {
+  taskId: string;
+  sectionId: string;
+  startKm: number;
+  endKm: number;
+  stages: TSRStage[];
+  fullRecoveryDate: string;
+}
+
+export interface CrewRosterAssignment {
+  gangId: string;
+  department: Department;
+  crewName: string;
+  assignedBlockId: string;
+  shiftDate: string;
+  shiftStart: string;
+  shiftEnd: string;
+  restUntil: string;
+  isNightShift: boolean;
+  hoerCompliant: boolean;
+}
+
+export interface MachineFleetUtilization {
+  machineCode: string;
+  machineName: string;
+  machineType: TrackMachineType;
+  totalWorkingHours: number;
+  idleHours: number;
+  transitKm: number;
+  utilizationRatePercentage: number;
+  assignedCorridors: string[];
+}
+
+export interface DisruptionEvent {
+  id: string;
+  type: 'RAIL_FRACTURE' | 'OHE_BREAKDOWN' | 'SIGNAL_FAILURE' | 'TRAIN_DELAY';
+  sectionId: string;
+  track: TrackDirection;
+  reportedAtKm: number;
+  severity: TaskSeverity;
+  estimatedResolutionMinutes: number;
+  delayMinutesIncurred: number;
+}
+
 export interface MaintenanceTask {
   id: string;
   sourceSystem: 'TMS' | 'SMMS' | 'TDMS';
@@ -117,6 +172,7 @@ export interface MaintenanceTask {
   sectionName: string;
   startKm: number;
   endKm: number;
+  track?: TrackDirection;
   estimatedDurationHours: number;
   severity: TaskSeverity;
   overdueDays: number;
@@ -142,6 +198,7 @@ export interface CorridorSection {
   startKm: number;
   endKm: number;
   tracks: number;
+  trackDesignations?: TrackDirection[];
   trafficDensity: 'VERY_HIGH' | 'HIGH' | 'MEDIUM';
   dailyTrainCount: number;
 }
@@ -152,6 +209,7 @@ export interface TrainMovement {
   trainName: string;
   type: 'PASSENGER_EXPRESS' | 'FREIGHT_GOODS' | 'PARCEL_SPECIAL';
   sectionId: string;
+  track?: TrackDirection;
   originZone: string;
   destinationZone: string;
   entryTime: string;
@@ -165,6 +223,8 @@ export interface BlockWindow {
   divisionCode: string;
   sectionId: string;
   sectionName: string;
+  track?: TrackDirection;
+  singleLineWorkingActive?: boolean;
   startTime: string;
   endTime: string;
   durationHours: number;
@@ -181,6 +241,8 @@ export interface BlockWindow {
   scheduledDate?: string;
   weekNumber?: number;
   monthName?: string;
+  solverType?: SolverType;
+  tsrProfile?: TSRRelaxationProfile;
   /** Server-side HMAC signature, populated by the BDMS sanction API. */
   signature?: string;
   /** SHA-256 hash of the signed payload, for tamper verification UI. */

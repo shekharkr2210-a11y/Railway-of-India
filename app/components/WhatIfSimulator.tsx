@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { WhatIfScenario } from '../lib/types';
+import { WhatIfScenario, SolverType, DisruptionEvent } from '../lib/types';
+import { SAMPLE_DISRUPTIONS, recoverFromDisruption, DisruptionRecoveryResult } from '../lib/disruptionEngine';
 import { 
   Sliders, 
   CloudRain, 
@@ -11,22 +12,28 @@ import {
   RotateCcw, 
   TrendingUp, 
   AlertTriangle,
-  Zap
+  Zap,
+  Cpu,
+  Flame
 } from 'lucide-react';
 
 interface WhatIfSimulatorProps {
-  onApplyScenario: (scenario: WhatIfScenario) => void;
+  onApplyScenario: (scenario: WhatIfScenario, solverType?: SolverType) => void;
+  onDisruptionRecovered?: (result: DisruptionRecoveryResult) => void;
   isSimulating?: boolean;
 }
 
 export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
   onApplyScenario,
+  onDisruptionRecovered,
   isSimulating = false,
 }) => {
   const [monsoonFactor, setMonsoonFactor] = useState<number>(1.0);
   const [freightSurge, setFreightSurge] = useState<number>(0);
   const [speedSensitivity, setSpeedSensitivity] = useState<number>(30);
   const [powerBuffer, setPowerBuffer] = useState<number>(20);
+  const [solverType, setSolverType] = useState<SolverType>('GREEDY_2OPT');
+  const [disruptionResult, setDisruptionResult] = useState<DisruptionRecoveryResult | null>(null);
 
   const handleApply = () => {
     onApplyScenario({
@@ -34,7 +41,16 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
       freightTrafficSurgePercentage: freightSurge,
       speedRestrictionSensitivity: speedSensitivity,
       powerBlockBufferMinutes: powerBuffer,
-    });
+    }, solverType);
+  };
+
+  const handleDisruption = (sample: DisruptionEvent) => {
+    // Run simulation
+    const result = recoverFromDisruption(sample, [], []);
+    setDisruptionResult(result);
+    if (onDisruptionRecovered) {
+      onDisruptionRecovered(result);
+    }
   };
 
   const handlePreset = (preset: 'NORMAL' | 'MONSOON' | 'FREIGHT_SURGE' | 'SAFETY_AUDIT') => {
@@ -222,12 +238,87 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
         </div>
       </div>
 
+      {/* Solver Engine Selector & Disruption Test */}
+      <div className="mt-5 pt-4 border-t border-gray-200 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Solver Mode */}
+        <div className="bg-slate-900 text-white p-3.5 rounded-xl flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-5 h-5 text-indigo-400" />
+            <div>
+              <div className="text-xs font-bold">Optimization Algorithm Engine</div>
+              <div className="text-[11px] text-slate-400">Choose heuristic or multi-objective Pareto solver</div>
+            </div>
+          </div>
+          <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+            <button
+              onClick={() => setSolverType('GREEDY_2OPT')}
+              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                solverType === 'GREEDY_2OPT'
+                  ? 'bg-indigo-600 text-white shadow font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Greedy 2-Opt
+            </button>
+            <button
+              onClick={() => setSolverType('PARETO_MULTI_OBJECTIVE')}
+              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                solverType === 'PARETO_MULTI_OBJECTIVE'
+                  ? 'bg-amber-500 text-slate-950 shadow font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Pareto Multi-Objective
+            </button>
+          </div>
+        </div>
+
+        {/* Emergency Disruption Trigger */}
+        <div className="bg-red-950/40 border border-red-900/60 text-white p-3.5 rounded-xl flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Flame className="w-5 h-5 text-red-400" />
+            <div>
+              <div className="text-xs font-bold text-red-200">Inject Live Incident / Disruption</div>
+              <div className="text-[11px] text-red-400/80">Test dynamic 1-click real-time re-scheduling</div>
+            </div>
+          </div>
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => handleDisruption(SAMPLE_DISRUPTIONS[0])}
+              className="px-2.5 py-1 text-[11px] font-bold rounded bg-red-600 hover:bg-red-500 text-white transition-all shadow"
+            >
+              Rail Fracture
+            </button>
+            <button
+              onClick={() => handleDisruption(SAMPLE_DISRUPTIONS[1])}
+              className="px-2.5 py-1 text-[11px] font-bold rounded bg-purple-600 hover:bg-purple-500 text-white transition-all shadow"
+            >
+              OHE Parting
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {disruptionResult && (
+        <div className="mt-3 p-3 bg-slate-900 border border-amber-500/40 rounded-xl text-xs space-y-1">
+          <div className="font-bold text-amber-400 flex items-center gap-1.5">
+            <AlertTriangle className="w-4 h-4" />
+            Disruption Resolved: {disruptionResult.disruption.type} (Estimated Recovery: {disruptionResult.totalRecoveryTimeMinutes} min)
+          </div>
+          <div className="text-slate-300 text-[11px]">
+            {disruptionResult.recoveryActions.map((action, i) => (
+              <div key={i}>{action}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Action Footer */}
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-200">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-200">
         <div className="text-xs text-gray-600 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-indigo-600" />
           <span>
-            Active Simulation: <strong className="text-gray-900">{monsoonFactor}x Weather</strong>, <strong className="text-gray-900">+{freightSurge}% Freight</strong>, <strong className="text-gray-900">{speedSensitivity} km/h TSR</strong>.
+            Active Simulation: <strong className="text-gray-900">{monsoonFactor}x Weather</strong>, <strong className="text-gray-900">+{freightSurge}% Freight</strong>, <strong className="text-gray-900">{speedSensitivity} km/h TSR</strong>, Solver: <strong className="text-indigo-600">{solverType}</strong>.
           </span>
         </div>
 

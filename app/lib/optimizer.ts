@@ -1,8 +1,10 @@
-import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, CorridorSection, TrainMovement } from './types';
+import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, CorridorSection, TrainMovement, SolverType, TrackDirection } from './types';
 import { calculateMLCriticality, generateAIRecommendations } from './mlEngine';
 import { findWindowsForDate, checkBlockTrainConflict, minutesToTimeString, timeStringToMinutes } from './timetableEngine';
 import { computeOptimizationMetrics } from './metrics';
 import { INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS } from './mockData';
+import { generateTSRRelaxationProfile } from './tsrEngine';
+import { solveParetoOptimalBlocks } from './solver/multiObjectiveSolver';
 
 export function calculateTaskCriticality(task: MaintenanceTask, section?: CorridorSection): number {
   return calculateMLCriticality(task, section);
@@ -21,13 +23,38 @@ export function generateOptimizedBlocks(
   selectedDivision: string = 'ALL',
   corridorSections: CorridorSection[] = INITIAL_CORRIDOR_SECTIONS,
   trainMovements: TrainMovement[] = INITIAL_TRAIN_MOVEMENTS,
-  startDateStr?: string
+  startDateStr?: string,
+  solverType: SolverType = 'GREEDY_2OPT'
 ): {
   blocks: BlockWindow[];
   metrics: OptimizationMetrics;
   recommendations: string[];
   unscheduledTasks: MaintenanceTask[];
 } {
+  // If Pareto Multi-Objective Solver is explicitly requested
+  if (solverType === 'PARETO_MULTI_OBJECTIVE') {
+    const horizonDays = horizon === 'DAILY' ? 1 : horizon === 'WEEKLY' ? 7 : 30;
+    let filteredTasks = [...allTasks];
+    if (scopeLevel === 'ZONE' && selectedZone !== 'ALL') {
+      filteredTasks = filteredTasks.filter(t => t.zoneCode === selectedZone);
+    } else if (scopeLevel === 'DIVISION' && selectedDivision !== 'ALL') {
+      filteredTasks = filteredTasks.filter(t => t.divisionCode === selectedDivision);
+    }
+
+    const paretoResult = solveParetoOptimalBlocks(filteredTasks, corridorSections, trainMovements, horizonDays, startDateStr);
+    const metrics = computeOptimizationMetrics(filteredTasks, paretoResult.blocks, corridorSections, horizonDays, scopeLevel);
+    metrics.unscheduledTasksCount = paretoResult.unscheduledTasks.length;
+    const recommendations = generateAIRecommendations(filteredTasks, paretoResult.blocks, metrics);
+    recommendations.unshift(`⚡ Pareto Multi-Objective Solver: Evaluated non-dominated candidate frontier with Rank 1 efficiency.`);
+
+    return {
+      blocks: paretoResult.blocks,
+      metrics,
+      recommendations,
+      unscheduledTasks: paretoResult.unscheduledTasks,
+    };
+  }
+
   // 1. Filter tasks by Geographic Scope (National / Zone / Division)
   let filteredTasks = [...allTasks];
 
@@ -210,12 +237,17 @@ export function generateOptimizedBlocks(
             const weekNumber = Math.min(5, Math.floor(dayOffset / 7) + 1);
             const monthName = currentDate.toLocaleString('default', { month: 'long' });
 
+            const blockTrack: TrackDirection = primaryTask.track || (clusterIdx % 2 === 0 ? 'UP_MAIN' : 'DN_MAIN');
+            const tsrProfile = generateTSRRelaxationProfile(primaryTask, dateStr);
+
             const block: BlockWindow = {
               id: `BLK-${primaryTask.zoneCode}-${blockCounter++}`,
               zoneCode: primaryTask.zoneCode,
               divisionCode: primaryTask.divisionCode,
               sectionId,
               sectionName: primaryTask.sectionName,
+              track: blockTrack,
+              singleLineWorkingActive: blockTrack !== 'BOTH_DIRECTIONS',
               startTime: startTimeStr,
               endTime: endTimeStr,
               durationHours: parseFloat(shadowBlockDuration.toFixed(1)),
@@ -232,6 +264,8 @@ export function generateOptimizedBlocks(
               scheduledDate: dateStr,
               weekNumber,
               monthName,
+              solverType: 'GREEDY_2OPT',
+              tsrProfile,
             };
 
             generatedBlocks.push(block);

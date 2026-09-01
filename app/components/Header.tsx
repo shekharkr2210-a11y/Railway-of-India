@@ -19,7 +19,8 @@ import {
   AlertCircle,
   Mail,
   User,
-  LogIn
+  LogIn,
+  Truck
 } from 'lucide-react';
 import { ScopeLevel, UserRole, ZonalRailway, DivisionalUnit } from '../lib/types';
 
@@ -28,8 +29,8 @@ interface HeaderProps {
   setHorizon: (horizon: 'DAILY' | 'WEEKLY' | 'MONTHLY') => void;
   onRunOptimizer: () => void;
   isOptimizing: boolean;
-  activeTab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA';
-  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA') => void;
+  activeTab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA' | 'FLEET_CREW';
+  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA' | 'FLEET_CREW') => void;
 
   scopeLevel: ScopeLevel;
   setScopeLevel: (scope: ScopeLevel) => void;
@@ -513,6 +514,18 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <RefreshCw className="w-3.5 h-3.5" />
           🔄 PM Cycles
+        </button>
+
+        <button
+          onClick={() => setActiveTab('FLEET_CREW')}
+          className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
+            activeTab === 'FLEET_CREW'
+              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+          }`}
+        >
+          <Truck className="w-3.5 h-3.5 text-amber-500" />
+          🚜 Machine Fleet & Crew
         </button>
       </div>
 

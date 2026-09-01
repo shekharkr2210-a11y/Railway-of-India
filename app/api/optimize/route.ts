@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     
     const zone = sanitizeInput(body.selectedZone || 'ALL');
     const division = sanitizeInput(body.selectedDivision || 'ALL');
+    const solverType = body.solverType === 'PARETO_MULTI_OBJECTIVE' ? 'PARETO_MULTI_OBJECTIVE' : 'GREEDY_2OPT';
 
     // Query database tasks if not explicitly provided (e.g. by What-If simulator)
     let tasks: MaintenanceTask[];
@@ -47,7 +48,9 @@ export async function POST(request: NextRequest) {
       zone,
       division,
       sections,
-      trainMovements
+      trainMovements,
+      body.startDateStr,
+      solverType
     );
 
 
