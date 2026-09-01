@@ -29,8 +29,8 @@ interface HeaderProps {
   setHorizon: (horizon: 'DAILY' | 'WEEKLY' | 'MONTHLY') => void;
   onRunOptimizer: () => void;
   isOptimizing: boolean;
-  activeTab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW';
-  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW') => void;
+  activeTab: 'NATIONAL' | 'OVERVIEW' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW';
+  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW') => void;
 
   scopeLevel: ScopeLevel;
   setScopeLevel: (scope: ScopeLevel) => void;
@@ -394,18 +394,6 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Activity className="w-3.5 h-3.5" />
           Division KPI Overview
-        </button>
-
-        <button
-          onClick={() => setActiveTab('GANTT')}
-          className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
-            activeTab === 'GANTT'
-              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
-              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-          }`}
-        >
-          <Calendar className="w-3.5 h-3.5" />
-          Time-Space Gantt Planner
         </button>
 
         <button

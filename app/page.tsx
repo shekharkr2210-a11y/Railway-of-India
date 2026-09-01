@@ -36,7 +36,7 @@ export default function Home() {
   const [loggedInUser, setLoggedInUser] = useState<string>('Railway Board HQ');
   const [horizon, setHorizon] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [activeTab, setActiveTab] = useState<
-    'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW'
+    'NATIONAL' | 'OVERVIEW' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW'
   >('NATIONAL');
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
@@ -340,19 +340,6 @@ export default function Home() {
             />
             <CalendarView blocks={blocks} horizon={horizon} />
             <WhatIfSimulator onApplyScenario={handleApplyWhatIfScenario} />
-          </div>
-        )}
-
-        {activeTab === 'GANTT' && (
-          <div>
-            <TimeSpaceGantt
-              sections={filteredSections}
-              blocks={blocks}
-              trains={INITIAL_TRAIN_MOVEMENTS}
-              tasks={filteredTasks}
-              horizon={horizon}
-            />
-            <CalendarView blocks={blocks} horizon={horizon} />
           </div>
         )}
 
