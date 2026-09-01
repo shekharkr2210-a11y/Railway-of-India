@@ -29,56 +29,16 @@ export interface SecurityStatus {
 
 export const INITIAL_SECURITY_STATUS: SecurityStatus = {
   dbConnected: true,
-  auditLogCount: 148,
-  latestAuditEventAt: new Date().toISOString(),
-  sessionCookieName: 'ir_session_token',
-  activeThreatsBlockedCount: 148,
+  auditLogCount: 0,
+  latestAuditEventAt: null,
+  sessionCookieName: 'bp_session',
+  activeThreatsBlockedCount: 0,
   wafStatus: 'ACTIVE & FILTERING',
-  rateLimiterState: '100 req/min (Nominal)',
+  rateLimiterState: '120 req/min (Nominal)',
 };
 
-export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
-  {
-    id: 'LOG-8841',
-    timestamp: '01:45:12',
-    action: 'BDMS_BLOCK_SANCTION',
-    userRole: 'BOARD_HQ (National)',
-    ipAddress: '10.142.12.89 (RailTel Secure LAN)',
-    status: 'SUCCESS',
-    digitalSignature: 'HMAC-SHA256:7B8F9A312DE10C99',
-    details: 'Sanctioned Block Window BLK-NCR-001 on NDLS-FZB corridor.',
-  },
-  {
-    id: 'LOG-8840',
-    timestamp: '01:42:08',
-    action: 'AI_OPTIMIZER_EXECUTION',
-    userRole: 'ZONAL_GM (NCR)',
-    ipAddress: '10.200.4.12 (RailTel Gateway)',
-    status: 'SUCCESS',
-    digitalSignature: 'HMAC-SHA256:A1C49E8203FD5B77',
-    details: 'Executed spatial co-location optimizer across 24h horizon. 4 shadow blocks formed.',
-  },
-  {
-    id: 'LOG-8839',
-    timestamp: '01:38:55',
-    action: 'CRIS_DEFECT_INGESTION',
-    userRole: 'SYSTEM (TMS API)',
-    ipAddress: '10.198.88.2 (CRIS Enterprise Hub)',
-    status: 'SUCCESS',
-    digitalSignature: 'HMAC-SHA256:44E119B02D6CA812',
-    details: 'Batch ingested 18 ultrasonic rail flaw records for PRYJ division.',
-  },
-  {
-    id: 'LOG-8838',
-    timestamp: '01:30:19',
-    action: 'UNAUTHORIZED_CROSS_ZONAL_REQ',
-    userRole: 'ANONYMOUS (External)',
-    ipAddress: '198.51.100.44 (Public WAN)',
-    status: 'DENIED',
-    digitalSignature: 'HMAC-SHA256:0000000000000000',
-    details: 'Blocked attempt to modify block parameters without cryptographic mTLS certificate.',
-  },
-];
+export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [];
+
 
 export function getHmacSecret(): string {
   const secret = process.env.HMAC_SECRET_KEY;

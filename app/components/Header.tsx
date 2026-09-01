@@ -28,8 +28,9 @@ interface HeaderProps {
   setHorizon: (horizon: 'DAILY' | 'WEEKLY' | 'MONTHLY') => void;
   onRunOptimizer: () => void;
   isOptimizing: boolean;
-  activeTab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES';
-  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES') => void;
+  activeTab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA';
+  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA') => void;
+
   scopeLevel: ScopeLevel;
   setScopeLevel: (scope: ScopeLevel) => void;
   selectedZone: string;
@@ -479,6 +480,30 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveTab('AI_MODEL')}
+          className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
+            activeTab === 'AI_MODEL'
+              ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+          🧠 AI Model Metrics
+        </button>
+
+        <button
+          onClick={() => setActiveTab('FREIGHT_COA')}
+          className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
+            activeTab === 'FREIGHT_COA'
+              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+          }`}
+        >
+          <Train className="w-3.5 h-3.5 text-amber-500" />
+          📦 Goods Forecast (COA)
+        </button>
+
+        <button
           onClick={() => setActiveTab('PM_CYCLES')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'PM_CYCLES'
@@ -490,6 +515,7 @@ export const Header: React.FC<HeaderProps> = ({
           🔄 PM Cycles
         </button>
       </div>
+
 
       {/* Role-Switch Authentication Modal */}
       {showRoleAuthModal && pendingRole && (

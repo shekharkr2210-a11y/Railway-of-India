@@ -1,6 +1,7 @@
 import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, CorridorSection, TrainMovement } from './types';
 import { calculateMLCriticality, generateAIRecommendations } from './mlEngine';
-import { findAvailableHeadwayWindows, checkBlockTrainConflict, minutesToTimeString } from './timetableEngine';
+import { findWindowsForDate, checkBlockTrainConflict, minutesToTimeString, timeStringToMinutes } from './timetableEngine';
+import { computeOptimizationMetrics } from './metrics';
 import { INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS } from './mockData';
 
 export function calculateTaskCriticality(task: MaintenanceTask, section?: CorridorSection): number {
@@ -19,8 +20,14 @@ export function generateOptimizedBlocks(
   selectedZone: string = 'ALL',
   selectedDivision: string = 'ALL',
   corridorSections: CorridorSection[] = INITIAL_CORRIDOR_SECTIONS,
-  trainMovements: TrainMovement[] = INITIAL_TRAIN_MOVEMENTS
-): { blocks: BlockWindow[]; metrics: OptimizationMetrics; recommendations: string[] } {
+  trainMovements: TrainMovement[] = INITIAL_TRAIN_MOVEMENTS,
+  startDateStr?: string
+): {
+  blocks: BlockWindow[];
+  metrics: OptimizationMetrics;
+  recommendations: string[];
+  unscheduledTasks: MaintenanceTask[];
+} {
   // 1. Filter tasks by Geographic Scope (National / Zone / Division)
   let filteredTasks = [...allTasks];
 
@@ -30,7 +37,7 @@ export function generateOptimizedBlocks(
     filteredTasks = filteredTasks.filter(t => t.divisionCode === selectedDivision);
   }
 
-  // 2. Compute AI Track Criticality Index (TCI 2.0) for each task using ML feature weighting
+  // 2. Compute AI Track Criticality Index (TCI 2.0) for each task using calibrated ML model
   const scoredTasks = filteredTasks.map(t => {
     const matchedSection = corridorSections.find(s => s.id === t.sectionId || s.name === t.sectionName);
     return {
@@ -49,24 +56,31 @@ export function generateOptimizedBlocks(
   });
 
   const generatedBlocks: BlockWindow[] = [];
-  let totalIndividualHours = 0;
-  let totalScheduledHours = 0;
-  let totalDowntimeSaved = 0;
-  let trainDelaysPrevented = 0;
-  let crossZonalConflictsResolved = 0;
+  const unscheduledTasks: MaintenanceTask[] = [];
 
   let blockCounter = 101;
-
-  // Horizon multiplier: Daily = 1 day, Weekly = 7 days, Monthly = 30 days
   const horizonDays = horizon === 'DAILY' ? 1 : horizon === 'WEEKLY' ? 7 : 30;
+  const baseStartDate = startDateStr ? new Date(startDateStr) : new Date();
 
-  // Track global machine booking timeline to prevent machinery double-booking
-  const globalMachineBookings: { machineCode: string; startMinutes: number; endMinutes: number }[] = [];
+  // Date-Aware Machinery Booking Timeline: Map of `${date}_${machineCode}` -> { startM, endM }[]
+  const dateMachineBookings = new Map<string, { startM: number; endM: number }[]>();
 
-  // 4. Multi-Department Spatial Clustering & Headway Slotting per Section
+  // Helper to check machine availability on a specific date
+  const isMachineAvailableOnDate = (dateStr: string, machineCode: string, startM: number, endM: number): boolean => {
+    const key = `${dateStr}_${machineCode}`;
+    const bookings = dateMachineBookings.get(key) || [];
+    return !bookings.some(b => !(endM <= b.startM || startM >= b.endM));
+  };
+
+  const registerMachineBooking = (dateStr: string, machineCode: string, startM: number, endM: number) => {
+    const key = `${dateStr}_${machineCode}`;
+    const bookings = dateMachineBookings.get(key) || [];
+    bookings.push({ startM, endM });
+    dateMachineBookings.set(key, bookings);
+  };
+
+  // 4. Multi-Department Spatial Clustering & Multi-Day Headway Slotting per Section
   Object.entries(sectionGroups).forEach(([sectionId, sectionTasks]) => {
-    const headwayWindows = findAvailableHeadwayWindows(sectionId, trainMovements);
-
     const clusters: MaintenanceTask[][] = [];
     const usedTaskIds = new Set<string>();
 
@@ -90,10 +104,8 @@ export function generateOptimizedBlocks(
       clusters.push(cluster);
     });
 
-    // 5. Schedule each cluster into clash-free timetable headway windows
-    const usedWindowSlots = new Set<string>();
-
-    clusters.forEach((cluster, idx) => {
+    // 5. Schedule each cluster across the horizon days Earliest-Deadline-First
+    clusters.forEach((cluster, clusterIdx) => {
       const sumIndividual = cluster.reduce((acc, t) => acc + t.estimatedDurationHours, 0);
       const maxIndividual = Math.max(...cluster.map(t => t.estimatedDurationHours));
       
@@ -103,190 +115,202 @@ export function generateOptimizedBlocks(
 
       const depts = Array.from(new Set(cluster.map(t => t.department)));
       const needsPower = cluster.some(t => t.requiresPowerBlock);
-
-      // Select optimal timetable headway window
-      let chosenStartMinutes: number = -1;
-      let chosenEndMinutes: number = -1;
-      let trainImpact: number = 0;
-      let conflictResolved = false;
-
-      // Best-fit algorithm: sort by smallest window first
-      const sortedWindows = [...headwayWindows].sort(
-        (a, b) => (a.endMinutes - a.startMinutes) - (b.endMinutes - b.startMinutes)
-      );
-
-      for (const window of sortedWindows) {
-        const windowKey = `${window.startMinutes}-${window.endMinutes}`;
-        if (usedWindowSlots.has(windowKey)) continue;
-
-        const candidateStart = window.startMinutes;
-        const candidateEnd = candidateStart + Math.round(shadowBlockDuration * 60);
-
-        if (candidateEnd > window.endMinutes) continue;
-
-        const startTimeStr = minutesToTimeString(candidateStart);
-        const endTimeStr = minutesToTimeString(candidateEnd);
-        const conflictCheck = checkBlockTrainConflict(sectionId, startTimeStr, endTimeStr, trainMovements);
-
-        if (!conflictCheck.hasConflict || !conflictCheck.isHardPassengerViolation) {
-          chosenStartMinutes = candidateStart;
-          chosenEndMinutes = candidateEnd;
-          trainImpact = conflictCheck.hasConflict ? conflictCheck.delayRiskMinutes : (cluster.length > 1 ? 15 : 45);
-          usedWindowSlots.add(windowKey);
-          conflictResolved = true;
-          break;
-        }
-      }
-
-      if (!conflictResolved) {
-        // Fallback night slot (01:00) or midday maintenance window (11:30)
-        const isNightSlot = idx % 2 === 1;
-        const startHour = isNightSlot ? 1 + (idx * 0.5) : 11.5 + (idx * 0.5);
-        chosenStartMinutes = Math.round(startHour * 60);
-        chosenEndMinutes = chosenStartMinutes + Math.round(shadowBlockDuration * 60);
-        
-        const startTimeStr = minutesToTimeString(chosenStartMinutes);
-        const endTimeStr = minutesToTimeString(chosenEndMinutes);
-        const conflictCheck = checkBlockTrainConflict(sectionId, startTimeStr, endTimeStr, trainMovements);
-        trainImpact = conflictCheck.hasConflict ? conflictCheck.delayRiskMinutes : (cluster.length > 1 ? 15 : 45);
-      }
-
-      const startTimeStr = minutesToTimeString(chosenStartMinutes);
-      const endTimeStr = minutesToTimeString(chosenEndMinutes);
       const primaryTask = cluster[0];
 
-      // Flag cross-zonal trunk corridor intersections (Golden Quadrilateral)
-      const isCrossZonal = primaryTask.sectionName.includes('MTJ-AGC') || 
-                           primaryTask.sectionName.includes('ST-MMCT') ||
-                           primaryTask.sectionName.includes('NDLS-FZB') ||
-                           primaryTask.sectionName.includes('CNB-PRYJ');
-      if (isCrossZonal) crossZonalConflictsResolved++;
+      let scheduled = false;
 
-      // Assign realistic track maintenance machines based on department tasks
-      const assignedMachines: string[] = [];
-      if (depts.includes('ENG')) {
-        const isHeavyTrackWork = cluster.some(t => 
-          t.title.toLowerCase().includes('renewal') || 
-          t.title.toLowerCase().includes('ballast') || 
-          t.title.toLowerCase().includes('weld') || 
-          t.title.toLowerCase().includes('fracture') ||
-          t.title.toLowerCase().includes('tamping')
-        );
-        if (isHeavyTrackWork) {
-          const bcmCode = `BCM-${(idx % 3) + 1}`;
-          const isBcmAvailable = !globalMachineBookings.some(
-            b => b.machineCode === bcmCode && 
-            !(chosenEndMinutes <= b.startMinutes || chosenStartMinutes >= b.endMinutes)
-          );
-          if (isBcmAvailable) {
-            assignedMachines.push(`${bcmCode} (Ballast Cleaner)`);
-            globalMachineBookings.push({ machineCode: bcmCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
+      // Iterate through each date in the planning horizon
+      for (let dayOffset = 0; dayOffset < horizonDays; dayOffset++) {
+        const currentDate = new Date(baseStartDate);
+        currentDate.setDate(baseStartDate.getDate() + dayOffset);
+        const dateStr = currentDate.toISOString().split('T')[0];
+
+        // Sweep available headway windows on this date
+        const headwayWindows = findWindowsForDate(sectionId, dateStr, trainMovements);
+
+        // Sort headway windows by best fit (smallest window >= block duration, lowest freight impact)
+        const sortedWindows = [...headwayWindows].sort((a, b) => {
+          const durA = a.endMinutes - a.startMinutes;
+          const durB = b.endMinutes - b.startMinutes;
+          if (a.freightImpactScore !== b.freightImpactScore) {
+            return a.freightImpactScore - b.freightImpactScore;
           }
+          return durA - durB;
+        });
 
-          const csmCode = `CSM-${(idx % 4) + 10}`;
-          const isCsmAvailable = !globalMachineBookings.some(
-            b => b.machineCode === csmCode && 
-            !(chosenEndMinutes <= b.startMinutes || chosenStartMinutes >= b.endMinutes)
-          );
-          if (isCsmAvailable) {
-            assignedMachines.push(`${csmCode} (Tamping Machine)`);
-            globalMachineBookings.push({ machineCode: csmCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
+        for (const window of sortedWindows) {
+          const candidateStart = window.startMinutes;
+          const candidateEnd = candidateStart + Math.round(shadowBlockDuration * 60);
+
+          if (candidateEnd > window.endMinutes && !window.isOvernightWindow) continue;
+
+          const startTimeStr = minutesToTimeString(candidateStart);
+          const endTimeStr = minutesToTimeString(candidateEnd);
+
+          const conflictCheck = checkBlockTrainConflict(sectionId, startTimeStr, endTimeStr, trainMovements);
+
+          // HARD SAFETY CONSTRAINT INVARIANT: Passenger trains must NEVER be delayed
+          if (!conflictCheck.isHardPassengerViolation) {
+            // Assign track maintenance machines
+            const assignedMachines: string[] = [];
+
+            if (depts.includes('ENG')) {
+              const isHeavyTrackWork = cluster.some(t => 
+                t.title.toLowerCase().includes('renewal') || 
+                t.title.toLowerCase().includes('ballast') || 
+                t.title.toLowerCase().includes('weld') || 
+                t.title.toLowerCase().includes('fracture') ||
+                t.title.toLowerCase().includes('tamping')
+              );
+              if (isHeavyTrackWork) {
+                const bcmCode = `BCM-${(clusterIdx % 3) + 1}`;
+                if (isMachineAvailableOnDate(dateStr, bcmCode, candidateStart, candidateEnd)) {
+                  assignedMachines.push(`${bcmCode} (Ballast Cleaner)`);
+                  registerMachineBooking(dateStr, bcmCode, candidateStart, candidateEnd);
+                }
+
+                const csmCode = `CSM-${(clusterIdx % 4) + 10}`;
+                if (isMachineAvailableOnDate(dateStr, csmCode, candidateStart, candidateEnd)) {
+                  assignedMachines.push(`${csmCode} (Tamping Machine)`);
+                  registerMachineBooking(dateStr, csmCode, candidateStart, candidateEnd);
+                }
+              } else {
+                const usfdCode = `USFD-${(clusterIdx % 4) + 1}`;
+                if (isMachineAvailableOnDate(dateStr, usfdCode, candidateStart, candidateEnd)) {
+                  assignedMachines.push(`${usfdCode} (Ultrasonic Flaw Tester)`);
+                  registerMachineBooking(dateStr, usfdCode, candidateStart, candidateEnd);
+                }
+              }
+            }
+
+            if (depts.includes('TRD')) {
+              const twCode = `TW-${(clusterIdx % 3) + 6}`;
+              if (isMachineAvailableOnDate(dateStr, twCode, candidateStart, candidateEnd)) {
+                assignedMachines.push(`${twCode} (8-Wheeler Tower Wagon)`);
+                registerMachineBooking(dateStr, twCode, candidateStart, candidateEnd);
+              }
+            }
+
+            if (depts.includes('SMMS')) {
+              const smmsRigCode = `SMMS-RIG-${(clusterIdx % 3) + 1}`;
+              if (isMachineAvailableOnDate(dateStr, smmsRigCode, candidateStart, candidateEnd)) {
+                assignedMachines.push(`${smmsRigCode} (Point Machine Calibration Rig)`);
+                registerMachineBooking(dateStr, smmsRigCode, candidateStart, candidateEnd);
+              }
+            }
+
+
+            // Cross-zonal corridor detection
+            const isCrossZonal = primaryTask.sectionName.includes('MTJ-AGC') || 
+                                 primaryTask.sectionName.includes('ST-MMCT') ||
+                                 primaryTask.sectionName.includes('NDLS-FZB') ||
+                                 primaryTask.sectionName.includes('CNB-PRYJ');
+
+            // Calculate weekNumber (1-5) and monthName
+            const weekNumber = Math.min(5, Math.floor(dayOffset / 7) + 1);
+            const monthName = currentDate.toLocaleString('default', { month: 'long' });
+
+            const block: BlockWindow = {
+              id: `BLK-${primaryTask.zoneCode}-${blockCounter++}`,
+              zoneCode: primaryTask.zoneCode,
+              divisionCode: primaryTask.divisionCode,
+              sectionId,
+              sectionName: primaryTask.sectionName,
+              startTime: startTimeStr,
+              endTime: endTimeStr,
+              durationHours: parseFloat(shadowBlockDuration.toFixed(1)),
+              isShadowBlock: cluster.length > 1,
+              participatingDepartments: depts,
+              taskIds: cluster.map(t => t.id),
+              powerBlockRequired: needsPower,
+              bdmsStatus: 'PROPOSED',
+              downtimeSavedHours: parseFloat(downtimeSaved.toFixed(1)),
+              trainImpactMinutes: conflictCheck.delayRiskMinutes,
+              horizon,
+              crossZonalImpact: isCrossZonal,
+              assignedMachines: assignedMachines.length > 0 ? assignedMachines : ['Heavy Track Gang #14'],
+              scheduledDate: dateStr,
+              weekNumber,
+              monthName,
+            };
+
+            generatedBlocks.push(block);
+            scheduled = true;
+            break;
           }
-        } else {
-          assignedMachines.push(`USFD-${(idx % 2) + 1} (Ultrasonic Flaw Tester)`);
         }
-      }
-      if (depts.includes('TRD')) {
-        const twCode = `TW-${(idx % 3) + 6}`;
-        const isTwAvailable = !globalMachineBookings.some(
-          b => b.machineCode === twCode && 
-          !(chosenEndMinutes <= b.startMinutes || chosenStartMinutes >= b.endMinutes)
-        );
-        if (isTwAvailable) {
-          assignedMachines.push(`${twCode} (8-Wheeler Tower Wagon)`);
-          globalMachineBookings.push({ machineCode: twCode, startMinutes: chosenStartMinutes, endMinutes: chosenEndMinutes });
-        }
-      }
-      if (depts.includes('SMMS')) {
-        assignedMachines.push('SMMS Point Machine Calibration Rig');
+
+        if (scheduled) break;
       }
 
-      const block: BlockWindow = {
-        id: `BLK-${primaryTask.zoneCode}-${blockCounter++}`,
-        zoneCode: primaryTask.zoneCode,
-        divisionCode: primaryTask.divisionCode,
-        sectionId,
-        sectionName: primaryTask.sectionName,
-        startTime: startTimeStr,
-        endTime: endTimeStr,
-        durationHours: parseFloat(shadowBlockDuration.toFixed(1)),
-        isShadowBlock: cluster.length > 1,
-        participatingDepartments: depts,
-        taskIds: cluster.map(t => t.id),
-        powerBlockRequired: needsPower,
-        bdmsStatus: 'PROPOSED',
-        downtimeSavedHours: parseFloat(downtimeSaved.toFixed(1)),
-        trainImpactMinutes: trainImpact,
-        horizon,
-        crossZonalImpact: isCrossZonal,
-        assignedMachines: assignedMachines.length > 0 ? assignedMachines : ['Heavy Track Gang #14'],
-      };
-
-      const today = new Date();
-      if (horizon === 'DAILY') {
-        block.scheduledDate = today.toISOString().split('T')[0];
-      } else if (horizon === 'WEEKLY') {
-        const dayOffset = Math.min(6, Math.floor(idx / Math.max(1, Math.ceil(clusters.length / 7))));
-        const date = new Date(today);
-        date.setDate(today.getDate() + dayOffset);
-        block.scheduledDate = date.toISOString().split('T')[0];
-      } else {
-        const dayOffset = Math.min(29, Math.floor(idx / Math.max(1, Math.ceil(clusters.length / 30))));
-        const date = new Date(today);
-        date.setDate(today.getDate() + dayOffset);
-        block.scheduledDate = date.toISOString().split('T')[0];
+      // If cannot be scheduled clash-free within horizon, add to unscheduled list (SAFETY INVARIANT)
+      if (!scheduled) {
+        cluster.forEach(t => unscheduledTasks.push(t));
       }
-
-      generatedBlocks.push(block);
-
-      totalIndividualHours += sumIndividual;
-      totalScheduledHours += shadowBlockDuration;
-      totalDowntimeSaved += downtimeSaved;
-      trainDelaysPrevented += Math.round(cluster.length * 35 + (trainImpact > 0 ? 0 : 45));
     });
   });
 
-  const totalDefects = filteredTasks.length;
-  const criticalTasksCount = filteredTasks.filter(t => t.severity === 'CRITICAL').length;
-  
-  // Calculate Asset Availability percentage directly from corridor capacity
-  const baseCapacityHours = (corridorSections.length || 7) * 24 * horizonDays;
-  const assetAvailabilityPercentage = parseFloat(
-    Math.min(99.8, Math.max(92.0, 100 * (1 - totalScheduledHours / Math.max(baseCapacityHours, 100)))).toFixed(1)
+  // 6. Post-Greedy 2-Opt Local Search Improvement Loop
+  // Evaluates potential block slot swaps on identical sections to minimize freight penalty & maximize downtime savings
+  if (generatedBlocks.length > 3) {
+    for (let i = 0; i < generatedBlocks.length - 1; i++) {
+      const b1 = generatedBlocks[i];
+      const b2 = generatedBlocks[i + 1];
+
+      if (b1.sectionId === b2.sectionId && b1.scheduledDate === b2.scheduledDate) {
+        // Evaluate swapping slot times
+        const check1 = checkBlockTrainConflict(b1.sectionId, b2.startTime, b2.endTime, trainMovements);
+        const check2 = checkBlockTrainConflict(b2.sectionId, b1.startTime, b1.endTime, trainMovements);
+
+        if (!check1.isHardPassengerViolation && !check2.isHardPassengerViolation) {
+          const currentPenalty = b1.trainImpactMinutes + b2.trainImpactMinutes;
+          const swappedPenalty = check1.delayRiskMinutes + check2.delayRiskMinutes;
+
+          if (swappedPenalty < currentPenalty) {
+            // Swap times and associated machine allocations
+            const tempStart = b1.startTime;
+            const tempEnd = b1.endTime;
+            const tempMachines = b1.assignedMachines;
+
+            b1.startTime = b2.startTime;
+            b1.endTime = b2.endTime;
+            b1.trainImpactMinutes = check1.delayRiskMinutes;
+            b1.assignedMachines = b2.assignedMachines;
+
+            b2.startTime = tempStart;
+            b2.endTime = tempEnd;
+            b2.trainImpactMinutes = check2.delayRiskMinutes;
+            b2.assignedMachines = tempMachines;
+          }
+        }
+      }
+    }
+  }
+
+
+  // 7. Compute exact, auditable metrics with zero arbitrary multipliers
+  const metrics = computeOptimizationMetrics(
+    filteredTasks,
+    generatedBlocks,
+    corridorSections,
+    horizonDays,
+    scopeLevel
   );
 
-  const shadowBlockEfficiency = totalIndividualHours > 0 
-    ? parseFloat(((totalDowntimeSaved / totalIndividualHours) * 100).toFixed(1))
-    : 0;
+  metrics.unscheduledTasksCount = unscheduledTasks.length;
 
-  // National projection multiplier for executive presentation
-  const scopeMultiplier = scopeLevel === 'NATIONAL' ? 18 : scopeLevel === 'ZONE' ? 4 : 1;
-
-  const metrics: OptimizationMetrics = {
-    totalDefects: totalDefects * scopeMultiplier,
-    criticalTasksCount: criticalTasksCount * scopeMultiplier,
-    assetAvailabilityPercentage: assetAvailabilityPercentage,
-    totalBlockHoursRequested: parseFloat((totalIndividualHours * scopeMultiplier).toFixed(1)),
-    optimizedBlockHoursScheduled: parseFloat((totalScheduledHours * scopeMultiplier).toFixed(1)),
-    downtimeHoursSaved: parseFloat((totalDowntimeSaved * scopeMultiplier).toFixed(1)),
-    shadowBlockEfficiency: shadowBlockEfficiency > 0 ? shadowBlockEfficiency : 0,
-    trainDelaysPreventedMinutes: trainDelaysPrevented * scopeMultiplier,
-    activeZonesCount: 18,
-    activeDivisionsCount: 68,
-    crossZonalConflictsResolved: crossZonalConflictsResolved * (scopeLevel === 'NATIONAL' ? 12 : 1),
-  };
-
+  // 8. Generate dynamic AI recommendations
   const recommendations = generateAIRecommendations(filteredTasks, generatedBlocks, metrics);
+  if (unscheduledTasks.length > 0) {
+    recommendations.unshift(
+      `⚠️ Safety Guard Active: ${unscheduledTasks.length} task(s) could not be fitted into clash-free windows without delaying passenger express trains. Recommend expanding weekend possessions.`
+    );
+  }
 
-  return { blocks: generatedBlocks, metrics, recommendations };
+  return {
+    blocks: generatedBlocks,
+    metrics,
+    recommendations,
+    unscheduledTasks,
+  };
 }

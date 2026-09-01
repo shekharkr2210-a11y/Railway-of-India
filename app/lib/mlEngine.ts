@@ -1,4 +1,8 @@
 import { MaintenanceTask, CorridorSection, TaskSeverity, Department, BlockWindow, OptimizationMetrics } from './types';
+import { predictFailureProbability, getModelEvaluationMetrics } from './ml/predict';
+
+export { predictFailureProbability, getModelEvaluationMetrics };
+
 
 export interface MLFeatureVector {
   severityWeight: number; // 0.0 - 1.0
@@ -125,8 +129,9 @@ export function extractTaskFeatures(
 
 /**
  * AI/ML Multi-Factor Track Criticality Index (TCI 2.0) Scoring Engine.
- * Generates a calibrated 10-99 score representing operational urgency and safety risk.
+ * Generates a calibrated 10-99 score blending rule-calibrated TCI with the trained ML failure model.
  */
+
 export function calculateMLCriticality(
   task: MaintenanceTask,
   section?: CorridorSection,
@@ -148,6 +153,15 @@ export function calculateMLCriticality(
 
   const features = extractTaskFeatures(task, section);
 
+  // ML model failure risk probability inference
+  const mlResult = predictFailureProbability({
+    severityWeight: features.severityWeight,
+    overdueFactor: features.overdueFactor,
+    speedImpactFactor: features.speedImpactFactor,
+    trafficDensityMultiplier: features.trafficDensityMultiplier,
+    powerBlockImpact: features.powerBlockImpact,
+  });
+
   // Calibrated linear combination with non-linear scaling
   const rawScore =
     (features.severityWeight * wSeverity * 2.2) +
@@ -157,8 +171,8 @@ export function calculateMLCriticality(
     (features.dependencyRiskFactor * wRisk) +
     (features.powerBlockImpact * 5);
 
-  // Apply traffic density multiplier
-  const adjustedScore = rawScore * features.trafficDensityMultiplier;
+  // Apply traffic density multiplier and blend with ML model failure probability (40% weight)
+  const adjustedScore = (rawScore * features.trafficDensityMultiplier * 0.60) + (mlResult.failureProbability * 100 * 0.40);
 
   // Bound within realistic calibrated TCI spectrum [10 - 99]
   return Math.min(Math.max(Math.round(adjustedScore), 10), 99);
@@ -179,6 +193,15 @@ export function predictMaintenanceDemands(
       ? sectionTasks.reduce((acc, t) => acc + t.overdueDays, 0) / sectionTasks.length
       : 0;
 
+    // Run ML inference on aggregate section features
+    const mlInference = predictFailureProbability({
+      severityWeight: criticalCount > 0 ? 0.45 : sectionTasks.length > 0 ? 0.32 : 0.15,
+      overdueFactor: Math.min(1.0, 1 - Math.exp(-0.22 * avgOverdue)),
+      speedImpactFactor: section.trafficDensity === 'VERY_HIGH' ? 0.6 : 0.3,
+      trafficDensityMultiplier: section.trafficDensity === 'VERY_HIGH' ? 1.4 : section.trafficDensity === 'HIGH' ? 1.2 : 1.0,
+      powerBlockImpact: sectionTasks.some(t => t.requiresPowerBlock) ? 0.15 : 0.0,
+    });
+
     // Traffic and train count baseline
     const trainTrafficFactor = (section.dailyTrainCount || 100) / 100;
     const densityFactor = section.trafficDensity === 'VERY_HIGH' ? 1.5 : section.trafficDensity === 'HIGH' ? 1.25 : 1.0;
@@ -187,16 +210,10 @@ export function predictMaintenanceDemands(
     const predicted7Days = Math.round((sectionTasks.length * 0.35 + criticalCount * 0.8 + avgOverdue * 0.2) * densityFactor * trainTrafficFactor);
     const predicted30Days = Math.round(predicted7Days * 3.8 + (section.lengthKm * 0.05));
 
-    // Failure risk probability (0.0 to 1.0)
-    const failureRisk = Math.min(
-      0.98,
-      parseFloat((0.15 + (criticalCount * 0.2) + (avgOverdue * 0.05) + (section.trafficDensity === 'VERY_HIGH' ? 0.15 : 0.0)).toFixed(2))
-    );
-
     let recommendedAction = 'Routine Track Geometry Inspection (TMS OMS-2000)';
-    if (failureRisk > 0.7) {
+    if (mlInference.failureProbability > 0.7) {
       recommendedAction = 'Immediate Ultrasonic Flaw Detection (USFD) & 25kV OHE Tension Scan';
-    } else if (failureRisk > 0.4) {
+    } else if (mlInference.failureProbability > 0.4) {
       recommendedAction = 'Pre-emptive Point Machine Overhaul & Fastener Tightening';
     }
 
@@ -206,12 +223,13 @@ export function predictMaintenanceDemands(
       department: (sectionTasks[0]?.department || 'ENG') as Department,
       predictedDefectsNext7Days: Math.max(1, predicted7Days),
       predictedDefectsNext30Days: Math.max(3, predicted30Days),
-      failureRiskProbability: failureRisk,
+      failureRiskProbability: mlInference.failureProbability,
       recommendedAction,
-      confidenceScore: parseFloat((0.91 + (criticalCount > 0 ? 0.05 : 0.02)).toFixed(2)),
+      confidenceScore: mlInference.calibratedConfidence,
     };
   });
 }
+
 
 /**
  * Generates dynamic, AI-driven operational recommendations for section controllers & DRMs.

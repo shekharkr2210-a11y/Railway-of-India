@@ -199,7 +199,9 @@ export interface OptimizationMetrics {
   activeZonesCount?: number;
   activeDivisionsCount?: number;
   crossZonalConflictsResolved?: number;
+  unscheduledTasksCount?: number;
 }
+
 
 /** Authenticated user returned by the server session layer and login API. */
 export interface SessionUser {

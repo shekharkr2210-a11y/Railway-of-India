@@ -1,6 +1,7 @@
 import type { Database } from 'better-sqlite3';
 import { ensureBootstrapped } from './bootstrap';
-import type { BlockWindow, TrainMovement } from './types';
+import type { BlockWindow, TrainMovement, CorridorSection } from './types';
+
 import type { AuditLogEntry } from './security';
 
 /**
@@ -276,7 +277,7 @@ export const referenceRepo = {
       activeTasksCount: r.active_tasks_count,
     }));
   },
-  sections() {
+  sections(): CorridorSection[] {
     const rows = db.prepare('SELECT * FROM sections ORDER BY id').all() as unknown as Record<string, unknown>[];
     return rows.map(r => ({
       id: String(r.id),
@@ -291,10 +292,11 @@ export const referenceRepo = {
       startKm: Number(r.start_km),
       endKm: Number(r.end_km),
       tracks: Number(r.tracks),
-      trafficDensity: String(r.traffic_density),
+      trafficDensity: (r.traffic_density as CorridorSection['trafficDensity']) || 'HIGH',
       dailyTrainCount: Number(r.daily_train_count),
     }));
   },
+
   trainMovements(): TrainMovement[] {
     const rows = db.prepare('SELECT * FROM train_movements ORDER BY entry_time').all() as unknown as {
       id: string; train_number: string; train_name: string; type: string; section_id: string;

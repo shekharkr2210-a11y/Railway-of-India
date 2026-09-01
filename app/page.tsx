@@ -16,7 +16,10 @@ import { LoginPage } from './components/LoginPage';
 import { PendingWorksReport } from './components/PendingWorksReport';
 import { PreventiveMaintenancePanel } from './components/PreventiveMaintenancePanel';
 import { WhatIfSimulator } from './components/WhatIfSimulator';
+import { ModelPerformancePanel } from './components/ModelPerformancePanel';
+import { GoodsTrainForecastPanel } from './components/GoodsTrainForecastPanel';
 import { recalculateTasksWithWhatIf } from './lib/mlEngine';
+import { computeOptimizationMetrics } from './lib/metrics';
 import { 
   ZONAL_RAILWAYS,
   DIVISIONAL_UNITS,
@@ -26,7 +29,7 @@ import {
 } from './lib/mockData';
 import { generateOptimizedBlocks } from './lib/optimizer';
 import { MaintenanceTask, BlockWindow, OptimizationMetrics, ScopeLevel, UserRole, WhatIfScenario } from './lib/types';
-import { INITIAL_AUDIT_LOGS, INITIAL_SECURITY_STATUS, AuditLogEntry } from './lib/security';
+import { INITIAL_AUDIT_LOGS, INITIAL_SECURITY_STATUS, AuditLogEntry, SecurityStatus } from './lib/security';
 import { generateClientSignature } from './lib/clientSecurity';
 import { runServerOptimization, postBackendBdmsSanction } from './lib/apiClient';
 import { Sparkles } from 'lucide-react';
@@ -35,7 +38,9 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<string>('');
   const [horizon, setHorizon] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
-  const [activeTab, setActiveTab] = useState<'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES'>('NATIONAL');
+  const [activeTab, setActiveTab] = useState<
+    'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA'
+  >('NATIONAL');
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
   // Enterprise Scope & Role State
@@ -46,26 +51,37 @@ export default function Home() {
 
   // Security Audit Log State
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(INITIAL_AUDIT_LOGS);
-  const [securityStatus] = useState(INITIAL_SECURITY_STATUS);
+  const [securityStatus, setSecurityStatus] = useState<SecurityStatus>(INITIAL_SECURITY_STATUS);
 
   const [tasks, setTasks] = useState<MaintenanceTask[]>(INITIAL_MAINTENANCE_TASKS);
   const [blocks, setBlocks] = useState<BlockWindow[]>([]);
-  const [metrics, setMetrics] = useState<OptimizationMetrics>({
-    totalDefects: 18450,
-    criticalTasksCount: 3120,
-    assetAvailabilityPercentage: 98.4,
-    totalBlockHoursRequested: 240,
-    optimizedBlockHoursScheduled: 114,
-    downtimeHoursSaved: 126,
-    shadowBlockEfficiency: 54.2,
-    trainDelaysPreventedMinutes: 14200,
-    activeZonesCount: 18,
-    activeDivisionsCount: 68,
-    crossZonalConflictsResolved: 142,
-  });
+  const [metrics, setMetrics] = useState<OptimizationMetrics>(() => 
+    computeOptimizationMetrics(INITIAL_MAINTENANCE_TASKS, [], INITIAL_CORRIDOR_SECTIONS, 7, 'NATIONAL')
+  );
 
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Fetch real audit logs & security telemetry on mount
+  useEffect(() => {
+    const fetchAuditLogs = async () => {
+      try {
+        const res = await fetch('/api/security/audit-logs');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.auditLogs && Array.isArray(data.auditLogs)) {
+            setAuditLogs(data.auditLogs);
+          }
+          if (data.securityStatus) {
+            setSecurityStatus(data.securityStatus);
+          }
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    };
+    fetchAuditLogs();
+  }, []);
 
   const runOptimization = useCallback(async (
     currentHorizon: 'DAILY' | 'WEEKLY' | 'MONTHLY',
@@ -91,7 +107,7 @@ export default function Home() {
           timestamp: new Date().toLocaleTimeString(),
           action: 'AI_OPTIMIZER_BACKEND_EXECUTION',
           userRole: `${userRole} (${currentScope})`,
-          ipAddress: '10.200.4.12 (RailTel Secure Backend API)',
+          ipAddress: '127.0.0.1 (Local Session)',
           status: 'SUCCESS',
           digitalSignature: generateClientSignature(`OPT-${Date.now()}`, { scope: currentScope, saved: response.metrics.downtimeHoursSaved }),
           details: `Backend REST API /api/optimize ran across ${scopeLabel}. Saved ${response.metrics.downtimeHoursSaved} hrs track downtime.`,
@@ -163,9 +179,11 @@ export default function Home() {
   };
 
   const handleTasksImported = (newTasks: MaintenanceTask[]) => {
-    const combined = [...newTasks, ...tasks];
-    setTasks(combined);
-    runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, combined);
+    setTasks(prev => {
+      const combined = [...newTasks, ...prev];
+      runOptimization(horizon, scopeLevel, selectedZone, selectedDivision, combined);
+      return combined;
+    });
     setToastMessage(`📥 Ingested ${newTasks.length} external defects from CRIS Data Bus! Re-optimizing...`);
   };
 
@@ -188,7 +206,7 @@ export default function Home() {
 
       const updated = blocks.map(b => {
         if (b.id === blockId) {
-          return { ...b, bdmsStatus: 'APPROVED' as const };
+          return { ...b, bdmsStatus: 'APPROVED' as const, signature: apiResponse.digitalSignature };
         }
         return b;
       });
@@ -200,7 +218,7 @@ export default function Home() {
         timestamp: new Date().toLocaleTimeString(),
         action: 'BDMS_BLOCK_SANCTION_BACKEND',
         userRole: `${userRole}`,
-        ipAddress: '10.142.12.89 (mTLS Encrypted Link)',
+        ipAddress: '127.0.0.1 (Local Session)',
         status: 'SUCCESS',
         digitalSignature: apiResponse.digitalSignature || generateClientSignature(blockId, {}),
         details: `Backend API /api/bdms/sanction cryptographically signed & approved ${blockId}.`,
@@ -233,6 +251,7 @@ export default function Home() {
     if (scopeLevel === 'DIVISION' && selectedDivision !== 'ALL') return t.divisionCode === selectedDivision;
     return true;
   });
+
   const handleLogin = (role: UserRole, username: string) => {
     setUserRole(role);
     setLoggedInUser(username);
@@ -395,15 +414,27 @@ export default function Home() {
             <PreventiveMaintenancePanel sections={filteredSections} tasks={filteredTasks} />
           </div>
         )}
+
+        {activeTab === 'AI_MODEL' && (
+          <div>
+            <ModelPerformancePanel />
+          </div>
+        )}
+
+        {activeTab === 'FREIGHT_COA' && (
+          <div>
+            <GoodsTrainForecastPanel sections={filteredSections} />
+          </div>
+        )}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-gray-50 py-4 px-6 text-center text-xs text-gray-500 flex flex-wrap justify-between items-center gap-4">
         <div>
-          🇮🇳 Indian Railways Enterprise AI Automatic Block Planning System • Full-Stack Backend Connected (REST API + TLS 1.3)
+          🇮🇳 Indian Railways Enterprise AI Automatic Block Planning System • Full-Stack Backend Connected (REST API + SQLite WAL)
         </div>
-        <div className="text-emerald-500 font-mono">
-          API Status: 200 OK • Backend Route Handlers Online
+        <div className="text-emerald-600 font-mono">
+          API Status: 200 OK • AI Prioritizer v2.4 Online
         </div>
       </footer>
     </div>

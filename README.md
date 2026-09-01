@@ -1,103 +1,183 @@
-# 🚆 Indian Railways AI-Powered Automatic Block Planning System
-### Smart India Hackathon / Problem Statement ID: 26027
+# 🚆 AI-Powered Automatic Block Planning System for Indian Railways
+### *Smart India Hackathon (SIH) — Ministry of Railways | Problem Statement ID: 26027*
 
-> **AI-Powered Automatic Block Planning to Maximize Asset Availability for Train Operations on Indian Railways**  
-> Organization: **Ministry of Railways** • Theme: **Transportation & Logistics**
-
----
-
-## 🌟 Executive Overview
-
-In Indian Railways, fixed infrastructure maintenance for **Civil Engineering (TMS)**, **Traction Distribution / 25kV OHE (TDMS)**, and **Signal & Telecommunication (SMMS)** has historically been requested independently through the **BDMS** system. Uncoordinated planning results in repeated track disconnections, speed restrictions (TSR), delayed passenger trains, and lost freight revenue.
-
-This system replaces decentralized manual planning with an **AI-driven, multi-department spatial-temporal optimization platform**:
-1. **Multi-System Enterprise Ingestion**: Connects defect feeds from **TMS**, **SMMS**, **TDMS**, **COA**, and **BDMS**.
-2. **AI Track Criticality Index (TCI: 0-100)**: Machine Learning multi-feature scoring model evaluating severity, exponential overdue decay, speed restriction severity ($\Delta v_{\text{TSR}}$), traffic density, and 25kV OHE power block necessity.
-3. **Train Timetable Headway Constraint Engine**: Integrates passenger express (Vande Bharat, Rajdhani) as hard constraints and freight trains as regulatable soft constraints to identify conflict-free gap windows.
-4. **Spatial Co-Location "Shadow Blocks"**: Automatically bundles maintenance crews operating within $\le 8\text{ km}$ on the same corridor section into a single unified block, reducing track downtime by up to **-53%**.
-5. **Multi-Horizon Strategic Planning**: High-resolution 24-hour tactical slotting (**Daily**), 7-day rolling schedule (**Weekly**), and 30-day preventive maintenance cycles (**Monthly**).
-6. **Zero-Trust BDMS Sanction Portal**: Multi-tier departmental concurrence (Civil + Electrical + S&T) with SHA-256 HMAC digital signatures and tamper-evident SOC audit logs.
+> **"AI-Powered Automatic Block Planning to Maximize Asset Availability for Train Operations on Indian Railways"**
 
 ---
 
-## 🏗️ Architecture & Data Flow
+## 📌 Executive Summary
 
-```mermaid
-graph TD
-    A["<b>Enterprise Data Feeds</b><br>TMS • SMMS • TDMS • COA • BDMS"] --> B["<b>API & Ingestion Bus</b><br>/api/tasks • /api/import"]
-    B --> C["<b>AI / ML Engine</b> (mlEngine.ts)<br>TCI Scoring & Demand Forecast"]
-    D["<b>Train Timetables</b> (COA)<br>Vande Bharat, Rajdhani, Freight"] --> E["<b>Headway Engine</b> (timetableEngine.ts)<br>Gap Finding & Conflict Analysis"]
-    C --> F["<b>AI Constraint Optimizer</b> (optimizer.ts)<br>Spatial Clustering (<= 8 km)<br>Shadow Block Synthesis"]
-    E --> F
-    F --> G["<b>REST API /api/optimize</b>"]
-    G --> H["<b>Interactive Next.js Dashboard</b><br>Daily / Weekly / Monthly Views"]
-    H --> I["<b>Time-Space Multi-Track Gantt</b>"]
-    H --> J["<b>BDMS Sanction Portal</b> (HMAC SHA-256)"]
-    H --> K["<b>SOC Security & Audit Stream</b>"]
+Maintaining track geometry, 25kV Overhead Electrification (OHE), and signaling assets on high-density corridors (such as the Golden Quadrilateral and Dedicated Freight Corridors) requires safe track possession windows (**"Traffic & Power Blocks"**). 
+
+Manual scheduling leads to corridor sub-optimization, cancellation of critical possessions, and unexpected passenger delays. This enterprise solution delivers an **AI-driven, multi-objective, multi-horizon block planning engine** that:
+1. **Ingests Core Enterprise Feeds**: Integrates TMS (Track Management System), SMMS (Signaling), TDMS (Traction Distribution), and COA (Control Office Application) into a unified SQLite persistence layer in WAL mode.
+2. **Prioritizes with Verified AI/ML**: Ranks safety-critical work orders via a trained and hold-out calibrated gradient model (**93.17% Test Accuracy, 0.9792 ROC-AUC**) with explainable feature attributions (XAI).
+3. **Optimizes Multi-Department Shadow Blocks**: Clusters track, OHE, and S&T works spatially ($\le 8\text{ km}$) and temporally into unified possessions, saving up to **54% corridor downtime**.
+4. **Enforces Hard Passenger Invariants**: Sweeps train timetables and ensures Vande Bharat, Rajdhani, and Shatabdi express trains **never experience delay** ($0\text{ passenger delay risk}$).
+5. **Generates Multi-Horizon Deliverables**: Produces Daily, Weekly (7-Day), and Monthly (30-Day) operational rosters with one-click **Joint Block Circular (JBC) CSV downloads**.
+
+---
+
+## 🏛️ System Architecture
+
+```
+                    ┌─────────────────────────────────────────────────────────┐
+                    │               INDIAN RAILWAYS DATA FEEDS                │
+                    │   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────┐  │
+                    │   │ TMS (Eng)│   │SMMS (S&T)│   │TDMS (TRD)│   │ COA  │  │
+                    │   └────┬─────┘   └────┬─────┘   └────┬─────┘   └──┬───┘  │
+                    └────────┼──────────────┼──────────────┼────────────┼─────┘
+                             │              │              │            │
+                             ▼              ▼              ▼            ▼
+                    ┌─────────────────────────────────────────────────────────┐
+                    │            MULTI-SOURCE ADAPTER & SYNC ENGINE           │
+                    │          (Watermark tracking & SQLite Persistence)      │
+                    └───────────────────────────┬─────────────────────────────┘
+                                                │
+                                                ▼
+                    ┌─────────────────────────────────────────────────────────┐
+                    │            AI/ML PRIORITIZATION & DEMAND ENGINE         │
+                    │  • Track Criticality Index (TCI 2.0)                    │
+                    │  • Calibrated Failure Model (93.2% Acc, 0.979 AUC)      │
+                    │  • Weibull Hazard Model: h(t) = (β/η)*(t/η)^(β-1)       │
+                    └───────────────────────────┬─────────────────────────────┘
+                                                │
+                                                ▼
+                    ┌─────────────────────────────────────────────────────────┐
+                    │       MULTI-OBJECTIVE TIMETABLE & BLOCK OPTIMIZER       │
+                    │  • Sweep-Line Headway Solver (Safety Clearance)         │
+                    │  • Hard Passenger Invariant (Zero Express Delays)       │
+                    │  • Freight Density Penalty (COA Forecast Engine)        │
+                    │  • Multi-Department Shadow Block Clustering (Δkm ≤ 8)   │
+                    │  • Date-Aware Machine Rostering (BCM, CSM, TW, USFD)   │
+                    │  • 2-Opt Local Search Improvement Loop                  │
+                    └───────────────────────────┬─────────────────────────────┘
+                                                │
+                                                ▼
+                    ┌─────────────────────────────────────────────────────────┐
+                    │            MULTI-HORIZON DELIVERABLES & BDMS            │
+                    │  • Daily / Weekly (7-Day) / Monthly (30-Day) Rosters    │
+                    │  • Joint Block Circular (JBC) CSV Export                │
+                    │  • BDMS Cryptographic Digital Sanctions (HMAC-SHA256)   │
+                    └─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🧠 AI/ML & Algorithmic Formulation
+## 📊 Core Capabilities Matrix
 
-### 1. Track Criticality Index (TCI) Scoring Model
-The TCI index calculates the operational and safety urgency of every defect:
-$$\text{TCI} = \Big[ (w_{\text{sev}} \cdot S_{\text{norm}}) + (w_{\text{overdue}} \cdot (1 - e^{-0.2 \cdot \text{days}})) + (w_{\text{speed}} \cdot \frac{\Delta v}{60}) + (w_{\text{deg}} \cdot D) + P_{\text{OHE}} \Big] \times M_{\text{traffic}}$$
-
-Where:
-- $S_{\text{norm}}$: One-hot encoded defect severity (`CRITICAL` = 0.45, `HIGH` = 0.32, `MEDIUM` = 0.20, `LOW` = 0.12).
-- $1 - e^{-0.2 \cdot \text{days}}$: Exponential penalty curve for overdue inspection tasks.
-- $\Delta v / 60$: Normalized Temporary Speed Restriction penalty.
-- $P_{\text{OHE}}$: Power block isolation requirement penalty.
-- $M_{\text{traffic}}$: Section traffic density multiplier (1.0 to 1.4).
-
-### 2. Spatial Co-Location (Shadow Blocking)
-Tasks in the same section are clustered if:
-$$|\text{startKm}_A - \text{startKm}_B| \le 8\text{ km}$$
-
-Combined Shadow Block Duration:
-$$T_{\text{shadow}} = \max(T_1, T_2, \dots, T_k) + 0.3\text{ hours (Clearance & OHE Earthing Buffer)}$$
-$$\text{Track Downtime Saved} = \sum_{i=1}^k T_i - T_{\text{shadow}}$$
-
-### 3. Timetable Constraint Formulation
-- **Hard Constraint**: For any passenger express train $P$ with transit window $[t_{\text{entry}}, t_{\text{exit}}]$ on section $S$:
-  $$\text{BlockWindow} \cap [t_{\text{entry}} - 20\text{m}, t_{\text{exit}} + 20\text{m}] = \emptyset$$
-- **Soft Constraint**: Freight train paths may be regulated or diverted with a minimized penalty factor.
+| Requirement | Implementation Detail | Source Code Reference |
+| :--- | :--- | :--- |
+| **1. Data Ingestion** | Adapters for TMS, SMMS, TDMS, COA with transactional SQLite upsert & watermark logging. | `app/lib/sources/` & `app/lib/syncEngine.ts` |
+| **2. Freight Forecast** | Time-series 24h freight rake density estimation across corridor sections from COA. | `app/lib/forecastEngine.ts` |
+| **3. AI Prioritization** | Gradient logistic prioritizer trained with hold-out evaluation (93.17% Acc, 0.9792 ROC-AUC). | `scripts/train_model.py` & `app/lib/ml/` |
+| **4. Multi-Horizon Plans**| Daily, 7-Day Weekly, and 30-Day Monthly calendars with machine bookings & JBC CSV export. | `app/lib/optimizer.ts` & `app/lib/planBuilder.ts` |
+| **5. Shadow Blocks** | Multi-department spatial grouping ($\le 8\text{ km}$) reducing possession downtime. | `app/lib/optimizer.ts` |
+| **6. Safety Invariant** | Hard constraint: zero passenger delay. If unschedulable, tasks divert to `unscheduledTasks`. | `app/lib/timetableEngine.ts` |
+| **7. Security & BDMS** | Signed cookie session auth, role-based RBAC, and HMAC-SHA256 digital sanction signatures. | `app/lib/security.ts` & `app/lib/session.ts` |
+| **8. Exact Metrics** | Zero fudge factors: Availability $= 1 - \frac{\text{Block Hrs}}{\text{Corridor Hrs}}$, real downtime saved. | `app/lib/metrics.ts` |
 
 ---
 
-## 💻 Tech Stack
+## 🚀 Quickstart Guide
 
-- **Frontend**: Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS v4, Lucide Icons.
-- **Backend**: Next.js Server Route Handlers (`/api/optimize`, `/api/bdms/sanction`, `/api/import`, `/api/tasks`, `/api/zones`, `/api/security`).
-- **Cryptographic Anti-Tamper**: Deterministic SHA-256 HMAC signature verification with Zero Trust audit trail.
-- **Mathematical Scheduling**: Timetable headway interval parser, spatial-temporal clustering optimizer, time-series moving degradation forecaster.
+### Prerequisites
+- **Node.js**: v20 or v22 LTS
+- **Python**: 3.9+ (for ML training script)
 
----
-
-## 🚀 Quick Start & Installation
-
+### 1. Installation
 ```bash
-# 1. Clone the repository and navigate to root
+# Clone the repository
+git clone <repo_url>
 cd problem
 
-# 2. Install dependencies
+# Install dependencies
 npm install
+```
 
-# 3. Start local development server
+### 2. Train the AI/ML Prioritization Model
+```bash
+python scripts/train_model.py
+```
+*Output: Exports trained weights, confusion matrix, feature importances, and isotonic calibration bins to `app/lib/ml/model.json`.*
+
+### 3. Run Automated Tests
+```bash
+npm test
+```
+*Executes 8 test suites and 28 unit/integration tests across timetable solvers, safety invariants, ML inference, and authentication.*
+
+### 4. Start Development Server
+```bash
 npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-# 4. Open in browser
-# http://localhost:3000
+---
+
+## 🐳 Docker Deployment
+
+```bash
+# Build and start via Docker Compose
+docker compose up -d --build
+
+# Check health status
+curl http://localhost:3000/api/health
 ```
 
 ---
 
-## 🧪 Verification & Demo Walkthrough
+## 🧑‍⚖️ Hackathon Technical Jury Demo Script
 
-1. **National Overview**: Inspect macro-level performance across all 18 Zonal Railways (NR, NCR, WR, CR, ER, SR, etc.).
-2. **Scope Switching**: Filter to **Zone: NCR** and **Division: PRYJ** to view localized corridor telemetry (NDLS-FZB, MTJ-AGC).
-3. **Multi-Horizon Planning**: Toggle **DAILY**, **WEEKLY**, and **MONTHLY** buttons in the header to switch the Time-Space Gantt planner between 24h slotting, 7-day rollup, and 30-day cyclical maintenance modes.
-4. **AI Re-Optimization**: Click **"Run AI Shadow Optimizer"** to re-cluster defect work orders against train timetables and view live downtime savings.
-5. **Data Ingestion**: Go to the **Data Ingestion** tab, click **"Trigger Multi-System Sync"** to simulate live defect ingestion from the CRIS Railway Data Bus.
-6. **BDMS Sanctioning**: Navigate to the **BDMS Sanction** tab and click **"Sign & Sanction Combined Block"** to generate SHA-256 cryptographic signatures.
+Follow this step-by-step walkthrough to evaluate all features:
+
+### Step 1: Secure Role-Based Authentication
+1. Navigate to `http://localhost:3000`.
+2. Login with official credentials:
+   - **Email**: `admin@indianrailways.gov.in`
+   - **Password**: `dev-admin1234`
+   - **Role**: Railway Board HQ (`BOARD_HQ`)
+
+### Step 2: Multi-Source Enterprise Ingestion (TMS / SMMS / TDMS / COA)
+1. Click the **"Live Ingestion Feeds"** tab in the navigation bar.
+2. Review the live adapter statuses for TMS, SMMS, TDMS, and COA.
+3. Click **"Sync All Enterprise Systems"**.
+4. Observe instantaneous ingestion of track flaws, S&T axle counters, and 25kV OHE catenary defects into SQLite.
+
+### Step 3: Verified AI/ML Prioritization & Empirical Feature Importance
+1. Click the **"🧠 AI Model Metrics"** tab.
+2. Review the hold-out test evaluation benchmarks:
+   - **Test Accuracy**: `93.2%`
+   - **ROC-AUC**: `0.979`
+   - **F1-Score**: `0.956`
+3. Inspect the **Feature Importance** ranking chart (Severity Level, Overdue Decay, Speed Restriction Impact).
+
+### Step 4: Control Office Application (COA) Goods-Train Forecast
+1. Click the **"📦 Goods Forecast (COA)"** tab.
+2. Select corridor `SEC-03 (MTJ-AGC)`.
+3. Adjust the **"Freight Traffic Surge"** slider (e.g. `+50%`) and observe time-slot freight density changes and optimal maintenance feasibility flags.
+
+### Step 5: Multi-Horizon Planning & Hard Passenger Invariant
+1. Click the **"System Overview"** or **"Calendar View"** tab.
+2. Toggle between **DAILY**, **WEEKLY**, and **MONTHLY** horizons in the top header.
+3. Observe how shadow blocks are scheduled clash-free across days without delaying passenger express trains.
+4. Click **"Download Plan (CSV)"** to inspect the generated official **Joint Block Circular (JBC)**.
+
+### Step 6: Cryptographic Digital Sanctions (BDMS Workflow)
+1. Click the **"BDMS Workflow"** tab.
+2. Click **"Approve & Sign Block Window"** on a proposed shadow block.
+3. Observe the server-side generated `HMAC-SHA256` digital sanction signature and immutable audit log entry in the **"Cybersecurity SOC Panel"**.
+
+---
+
+## 🔒 Security & Compliance
+- **Digital Sanctioning**: HMAC-SHA256 tamper-proof block verification.
+- **Session Layer**: Cryptographically signed HttpOnly cookie tokens.
+- **Audit Logging**: Immutable SQLite audit log tracking all optimizer executions and block approvals.
+- **Database Engine**: Embedded zero-latency SQLite with Write-Ahead Logging (WAL) and automated migration tracking.
+
+---
+
+## 📄 License & Attribution
+Developed for the **Smart India Hackathon (SIH) — Ministry of Railways (Problem Statement 26027)**.
+*Dedicated to the modernization and safety of Indian Railways.*

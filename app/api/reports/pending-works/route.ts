@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { INITIAL_MAINTENANCE_TASKS } from '@/app/lib/mockData';
+import { taskStore } from '@/app/lib/taskStore';
 import { MaintenanceTask } from '@/app/lib/types';
 
 export async function GET(request: NextRequest) {
@@ -9,12 +9,13 @@ export async function GET(request: NextRequest) {
   const department = searchParams.get('department');
   const severity = searchParams.get('severity');
 
-  let tasks: MaintenanceTask[] = [...INITIAL_MAINTENANCE_TASKS];
+  const tasks: MaintenanceTask[] = taskStore.getByFilter({
+    zone,
+    division,
+    department,
+    severity,
+  });
 
-  if (zone && zone !== 'ALL') tasks = tasks.filter(t => t.zoneCode === zone);
-  if (division && division !== 'ALL') tasks = tasks.filter(t => t.divisionCode === division);
-  if (department && department !== 'ALL') tasks = tasks.filter(t => t.department === department);
-  if (severity && severity !== 'ALL') tasks = tasks.filter(t => t.severity === severity);
 
   // Department breakdown
   const byDepartment = {

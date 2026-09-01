@@ -81,7 +81,29 @@ export function runMigrations(db: DatabaseInstance): void {
       );
     })();
   }
+
+  if (!applied.has('0002-source-syncs-and-freight')) {
+    db.transaction(() => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS source_syncs (
+          id TEXT PRIMARY KEY,
+          source_system TEXT NOT NULL,
+          watermark TEXT,
+          records_synced INTEGER NOT NULL DEFAULT 0,
+          status TEXT NOT NULL,
+          error_details TEXT,
+          synced_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_syncs_source ON source_syncs(source_system);
+      `);
+      db.prepare('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(
+        '0002-source-syncs-and-freight',
+        new Date().toISOString()
+      );
+    })();
+  }
 }
+
 
 export function getDb(): DatabaseInstance {
   if (instance) return instance;

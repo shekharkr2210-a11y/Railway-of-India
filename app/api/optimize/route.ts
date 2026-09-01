@@ -1,4 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { taskStore } from '@/app/lib/taskStore';
+import { referenceRepo } from '@/app/lib/repositories';
 import { INITIAL_MAINTENANCE_TASKS, INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS } from '@/app/lib/mockData';
 import { generateOptimizedBlocks } from '@/app/lib/optimizer';
 import { ScopeLevel, MaintenanceTask } from '@/app/lib/types';
@@ -21,20 +23,33 @@ export async function POST(request: NextRequest) {
     
     const zone = sanitizeInput(body.selectedZone || 'ALL');
     const division = sanitizeInput(body.selectedDivision || 'ALL');
-    const clientTasks: MaintenanceTask[] = body.tasks && Array.isArray(body.tasks) && body.tasks.length > 0
-      ? body.tasks
-      : INITIAL_MAINTENANCE_TASKS;
+
+    // Query database tasks if not explicitly provided (e.g. by What-If simulator)
+    let tasks: MaintenanceTask[];
+    if (body.tasks && Array.isArray(body.tasks) && body.tasks.length > 0) {
+      tasks = body.tasks;
+    } else {
+      const dbTasks = taskStore.getByFilter({
+        zone: scope === 'ZONE' ? zone : undefined,
+        division: scope === 'DIVISION' ? division : undefined,
+      });
+      tasks = dbTasks.length > 0 ? dbTasks : INITIAL_MAINTENANCE_TASKS;
+    }
+
+    const sections = referenceRepo.sections().length > 0 ? referenceRepo.sections() : INITIAL_CORRIDOR_SECTIONS;
+    const trainMovements = referenceRepo.trainMovements().length > 0 ? referenceRepo.trainMovements() : INITIAL_TRAIN_MOVEMENTS;
 
     // Run AI-powered server-side optimization algorithm with timetable constraints
     const result = generateOptimizedBlocks(
-      clientTasks,
+      tasks,
       horizon,
       scope,
       zone,
       division,
-      INITIAL_CORRIDOR_SECTIONS,
-      INITIAL_TRAIN_MOVEMENTS
+      sections,
+      trainMovements
     );
+
 
     return NextResponse.json({
       success: true,

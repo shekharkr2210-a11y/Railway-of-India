@@ -22,15 +22,16 @@ export async function POST(request: NextRequest) {
     }
     const { blockId, payload } = parsed.data;
 
-    // Retrieve active session or fallback for demo mode
-    const session = getSessionFromRequest(request) || {
-      id: 'demo-user',
-      name: 'Authorized Officer',
-      email: 'officer@indianrailways.gov.in',
-      role: 'BOARD_HQ',
-      zoneCode: 'NCR',
-      divisionCode: 'PRYJ',
-    };
+    // Retrieve active session (strict authentication required)
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      logAudit('BDMS_SANCTION_UNAUTHENTICATED', null, request, 'DENIED', `Unauthenticated sanction attempt for block ${blockId}`);
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized — active authenticated session required to sanction blocks' },
+        { status: 401 }
+      );
+    }
+
 
     if (!SANCTION_ROLES.includes(session.role as (typeof SANCTION_ROLES)[number])) {
       logAudit('BDMS_SANCTION_UNAUTHORIZED', session, request, 'DENIED', `Role ${session.role} cannot sanction blocks`);
