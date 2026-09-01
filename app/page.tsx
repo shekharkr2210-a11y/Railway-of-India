@@ -11,13 +11,10 @@ import { ShadowBlockShowcase } from './components/ShadowBlockShowcase';
 import { TaskPriorityTable } from './components/TaskPriorityTable';
 import { BDMSWorkflow } from './components/BDMSWorkflow';
 import { DataIngestionPanel } from './components/DataIngestionPanel';
-import { CyberSecurityPanel } from './components/CyberSecurityPanel';
-import { LoginPage } from './components/LoginPage';
 import { PendingWorksReport } from './components/PendingWorksReport';
 import { PreventiveMaintenancePanel } from './components/PreventiveMaintenancePanel';
 import { WhatIfSimulator } from './components/WhatIfSimulator';
 import { ModelPerformancePanel } from './components/ModelPerformancePanel';
-import { GoodsTrainForecastPanel } from './components/GoodsTrainForecastPanel';
 import { MachineUtilizationPanel } from './components/MachineUtilizationPanel';
 import { recalculateTasksWithWhatIf } from './lib/mlEngine';
 import { computeOptimizationMetrics } from './lib/metrics';
@@ -36,11 +33,10 @@ import { runServerOptimization, postBackendBdmsSanction } from './lib/apiClient'
 import { Sparkles } from 'lucide-react';
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loggedInUser, setLoggedInUser] = useState<string>('');
+  const [loggedInUser, setLoggedInUser] = useState<string>('Railway Board HQ');
   const [horizon, setHorizon] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [activeTab, setActiveTab] = useState<
-    'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA' | 'FLEET_CREW'
+    'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW'
   >('NATIONAL');
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
@@ -270,17 +266,6 @@ export default function Home() {
     return true;
   });
 
-  const handleLogin = (role: UserRole, username: string) => {
-    setUserRole(role);
-    setLoggedInUser(username);
-    setIsAuthenticated(true);
-  };
-
-  // Auth Gate: Show login page if not authenticated
-  if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
-
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-500 selection:text-white flex flex-col">
       {/* Top Header */}
@@ -302,7 +287,6 @@ export default function Home() {
         zones={ZONAL_RAILWAYS}
         divisions={DIVISIONAL_UNITS}
         loggedInUser={loggedInUser}
-        onLogout={() => setIsAuthenticated(false)}
       />
 
       {/* Floating Notification Toast */}
@@ -412,15 +396,6 @@ export default function Home() {
           </div>
         )}
 
-        {activeTab === 'SECURITY' && (
-          <div>
-            <CyberSecurityPanel
-              status={securityStatus}
-              auditLogs={auditLogs}
-            />
-          </div>
-        )}
-
         {activeTab === 'INGESTION' && (
           <div>
             <DataIngestionPanel onTasksImported={handleTasksImported} />
@@ -436,12 +411,6 @@ export default function Home() {
         {activeTab === 'AI_MODEL' && (
           <div>
             <ModelPerformancePanel />
-          </div>
-        )}
-
-        {activeTab === 'FREIGHT_COA' && (
-          <div>
-            <GoodsTrainForecastPanel sections={filteredSections} />
           </div>
         )}
 

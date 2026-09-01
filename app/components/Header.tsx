@@ -29,8 +29,8 @@ interface HeaderProps {
   setHorizon: (horizon: 'DAILY' | 'WEEKLY' | 'MONTHLY') => void;
   onRunOptimizer: () => void;
   isOptimizing: boolean;
-  activeTab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA' | 'FLEET_CREW';
-  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'SECURITY' | 'PM_CYCLES' | 'AI_MODEL' | 'FREIGHT_COA' | 'FLEET_CREW') => void;
+  activeTab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW';
+  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'GANTT' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW') => void;
 
   scopeLevel: ScopeLevel;
   setScopeLevel: (scope: ScopeLevel) => void;
@@ -457,18 +457,6 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('SECURITY')}
-          className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
-            activeTab === 'SECURITY'
-              ? 'bg-emerald-50 text-emerald-700 font-semibold border border-emerald-500/30'
-              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-          }`}
-        >
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          Cybersecurity SOC Panel
-        </button>
-
-        <button
           onClick={() => setActiveTab('INGESTION')}
           className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
             activeTab === 'INGESTION'
@@ -490,18 +478,6 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
           🧠 AI Model Metrics
-        </button>
-
-        <button
-          onClick={() => setActiveTab('FREIGHT_COA')}
-          className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
-            activeTab === 'FREIGHT_COA'
-              ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-500/30'
-              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-          }`}
-        >
-          <Train className="w-3.5 h-3.5 text-amber-500" />
-          📦 Goods Forecast (COA)
         </button>
 
         <button
