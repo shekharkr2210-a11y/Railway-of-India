@@ -20,7 +20,8 @@ import {
   Mail,
   User,
   LogIn,
-  Truck
+  Truck,
+  FileSpreadsheet
 } from 'lucide-react';
 import { ScopeLevel, UserRole, ZonalRailway, DivisionalUnit } from '../lib/types';
 
@@ -29,8 +30,8 @@ interface HeaderProps {
   setHorizon: (horizon: 'DAILY' | 'WEEKLY' | 'MONTHLY') => void;
   onRunOptimizer: () => void;
   isOptimizing: boolean;
-  activeTab: 'NATIONAL' | 'OVERVIEW' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW';
-  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW') => void;
+  activeTab: 'NATIONAL' | 'OVERVIEW' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'DATA_IMPORT' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW';
+  setActiveTab: (tab: 'NATIONAL' | 'OVERVIEW' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'DATA_IMPORT' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW') => void;
 
   scopeLevel: ScopeLevel;
   setScopeLevel: (scope: ScopeLevel) => void;
@@ -454,6 +455,18 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <RefreshCw className="w-3.5 h-3.5" />
           Live Ingestion Feeds
+        </button>
+
+        <button
+          onClick={() => setActiveTab('DATA_IMPORT')}
+          className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition-all ${
+            activeTab === 'DATA_IMPORT'
+              ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-500/30'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+          }`}
+        >
+          <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500" />
+          📁 Data Import
         </button>
 
         <button

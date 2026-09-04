@@ -315,4 +315,37 @@ export const referenceRepo = {
       priority: r.priority,
     }));
   },
+  upsertTrainMovements(movements: TrainMovement[]): void {
+    const stmt = db.prepare(`
+      INSERT INTO train_movements (id, train_number, train_name, type, section_id, origin_zone, destination_zone, entry_time, exit_time, priority)
+      VALUES (@id, @trainNumber, @trainName, @type, @sectionId, @originZone, @destinationZone, @entryTime, @exitTime, @priority)
+      ON CONFLICT(id) DO UPDATE SET
+        train_number = excluded.train_number,
+        train_name = excluded.train_name,
+        type = excluded.type,
+        section_id = excluded.section_id,
+        origin_zone = excluded.origin_zone,
+        destination_zone = excluded.destination_zone,
+        entry_time = excluded.entry_time,
+        exit_time = excluded.exit_time,
+        priority = excluded.priority
+    `);
+    
+    db.transaction((items: TrainMovement[]) => {
+      for (const m of items) {
+        stmt.run({
+          id: m.id,
+          trainNumber: m.trainNumber,
+          trainName: m.trainName,
+          type: m.type,
+          sectionId: m.sectionId,
+          originZone: m.originZone,
+          destinationZone: m.destinationZone,
+          entryTime: m.entryTime,
+          exitTime: m.exitTime,
+          priority: m.priority
+        });
+      }
+    })(movements);
+  }
 };

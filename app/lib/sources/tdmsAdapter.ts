@@ -1,3 +1,4 @@
+import { parseCSV } from '../csvParser';
 import { MaintenanceTask } from '../types';
 import { SourceAdapter } from './types';
 import { calculateMLCriticality } from '../mlEngine';
@@ -107,5 +108,48 @@ export const tdmsAdapter: SourceAdapter = {
     const section = INITIAL_CORRIDOR_SECTIONS.find(s => s.id === task.sectionId || s.name === task.sectionName);
     task.criticalityScore = calculateMLCriticality(task, section);
     return task;
+  },
+
+  parseFromCSV(csvContent: string): MaintenanceTask[] {
+    const parsed = parseCSV<MaintenanceTask>(csvContent, {
+      columnMapping: {
+        defect_id: 'id',
+        section_id: 'sectionId',
+        section_name: 'sectionName',
+        zone_code: 'zoneCode',
+        division_code: 'divisionCode',
+        title: 'title',
+        severity: 'severity',
+        overdue_days: 'overdueDays',
+        start_km: 'startKm',
+        end_km: 'endKm',
+        duration_hours: 'estimatedDurationHours',
+        speed_restriction: 'speedRestrictionImpactKmvh',
+        requires_power_block: 'requiresPowerBlock'
+      },
+      transform: (row) => {
+        const rawTask = {
+          id: row.id,
+          sourceSystem: 'TDMS' as const,
+          department: 'TRD' as const,
+          departmentName: 'Traction Distribution (OHE)',
+          zoneCode: row.zoneCode,
+          divisionCode: row.divisionCode,
+          title: row.title,
+          sectionId: row.sectionId,
+          sectionName: row.sectionName,
+          startKm: parseFloat(row.startKm) || 0,
+          endKm: parseFloat(row.endKm) || 0,
+          estimatedDurationHours: parseFloat(row.estimatedDurationHours) || 2,
+          severity: row.severity,
+          overdueDays: parseInt(row.overdueDays, 10) || 0,
+          requiresPowerBlock: true, // TDMS usually requires power block
+          speedRestrictionImpactKmvh: parseFloat(row.speedRestrictionImpactKmvh) || 0,
+          status: 'PENDING' as const,
+        };
+        return this.mapToCanonicalTask(rawTask);
+      }
+    });
+    return parsed.data;
   },
 };

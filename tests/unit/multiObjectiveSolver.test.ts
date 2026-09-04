@@ -15,6 +15,7 @@ describe('Pareto Multi-Objective Optimization Solver', () => {
         machineUtilizationScore: 60,
       },
       paretoRank: 1,
+      crowdingDistance: 0,
       isDominated: false,
     };
 
@@ -29,6 +30,7 @@ describe('Pareto Multi-Objective Optimization Solver', () => {
         machineUtilizationScore: 40,
       },
       paretoRank: 1,
+      crowdingDistance: 0,
       isDominated: false,
     };
 

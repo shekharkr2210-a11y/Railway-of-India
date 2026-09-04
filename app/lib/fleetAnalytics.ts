@@ -31,6 +31,7 @@ const MACHINE_REGISTRY: Array<{
  */
 export function calculateFleetUtilization(
   blocks: BlockWindow[],
+  sectionsOrHorizon: import('./types').CorridorSection[] | number = [],
   horizonDays: number = 7
 ): {
   fleet: MachineFleetUtilization[];
@@ -38,7 +39,9 @@ export function calculateFleetUtilization(
   totalFleetOperatingHours: number;
   totalTransitKm: number;
 } {
-  const totalAvailableShiftHoursPerMachine = horizonDays * 6; // Standard 6h target availability per day
+  const sections = Array.isArray(sectionsOrHorizon) ? sectionsOrHorizon : [];
+  const effectiveHorizonDays = typeof sectionsOrHorizon === 'number' ? sectionsOrHorizon : horizonDays;
+  const totalAvailableShiftHoursPerMachine = effectiveHorizonDays * 6; // Standard 6h target availability per day
 
   const fleetMap = new Map<string, {
     workingHours: number;
@@ -55,6 +58,12 @@ export function calculateFleetUtilization(
     });
   });
 
+  // Helper map to quickly get section length
+  const sectionLengths = new Map<string, number>();
+  sections.forEach(s => {
+    sectionLengths.set(s.name, s.lengthKm || 28);
+  });
+
   // Track block allocations
   blocks.forEach(b => {
     if (!b.assignedMachines) return;
@@ -63,9 +72,13 @@ export function calculateFleetUtilization(
       if (match) {
         const stats = fleetMap.get(match.code)!;
         stats.workingHours += b.durationHours;
-        stats.assignedCorridors.add(b.sectionName);
-        // Estimate transit km based on unique corridors visited
-        stats.transitKm = stats.assignedCorridors.size * 28;
+        
+        if (!stats.assignedCorridors.has(b.sectionName)) {
+          stats.assignedCorridors.add(b.sectionName);
+          // Calculate transit km based on actual corridor length, fallback to 28
+          const len = sectionLengths.get(b.sectionName) || 28;
+          stats.transitKm += len;
+        }
       }
     }
   });

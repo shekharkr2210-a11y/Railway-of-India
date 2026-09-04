@@ -107,3 +107,7 @@ export function predictFailureProbability(features: {
 export function getModelEvaluationMetrics(): MLModelArtifact {
   return ML_MODEL_METADATA;
 }
+
+export function getFeatureImportanceRanking(): Array<{ feature: string; importance: number; weight: number }> {
+  return ML_MODEL_METADATA.feature_importances.sort((a, b) => b.importance - a.importance);
+}

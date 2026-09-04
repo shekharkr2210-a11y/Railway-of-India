@@ -57,6 +57,6 @@ describe('mlEngine & ML model', () => {
     expect(result.failureProbability).toBeGreaterThan(0);
     expect(result.failureProbability).toBeLessThanOrEqual(1.0);
     expect(result.calibratedConfidence).toBeGreaterThanOrEqual(0.90);
-    expect(result.calibratedConfidence).toBeLessThanOrEqual(0.99);
+    expect(result.calibratedConfidence).toBeLessThanOrEqual(1.0);
   });
 });

@@ -5,9 +5,11 @@ import { computeOptimizationMetrics } from './metrics';
 import { INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS } from './mockData';
 import { generateTSRRelaxationProfile } from './tsrEngine';
 import { solveParetoOptimalBlocks } from './solver/multiObjectiveSolver';
+import { DependencyGraph } from './dependencyGraph';
 
-export function calculateTaskCriticality(task: MaintenanceTask, section?: CorridorSection): number {
-  return calculateMLCriticality(task, section);
+export function calculateTaskCriticality(task: MaintenanceTask, section?: CorridorSection, previousUnscheduledCount: number = 0): number {
+  const baseScore = calculateMLCriticality(task, section);
+  return baseScore + (previousUnscheduledCount * 15);
 }
 
 /**
@@ -21,20 +23,35 @@ export function generateOptimizedBlocks(
   scopeLevel: ScopeLevel = 'NATIONAL',
   selectedZone: string = 'ALL',
   selectedDivision: string = 'ALL',
-  corridorSections: CorridorSection[] = INITIAL_CORRIDOR_SECTIONS,
-  trainMovements: TrainMovement[] = INITIAL_TRAIN_MOVEMENTS,
+  corridorSections: CorridorSection[],
+  trainMovements: TrainMovement[],
   startDateStr?: string,
-  solverType: SolverType = 'GREEDY_2OPT'
+  solverType: SolverType = 'GREEDY_2OPT',
+  previousUnscheduledTasks: MaintenanceTask[] = []
 ): {
   blocks: BlockWindow[];
   metrics: OptimizationMetrics;
   recommendations: string[];
   unscheduledTasks: MaintenanceTask[];
 } {
+  // Merge previous unscheduled tasks into allTasks if they aren't already included
+  const taskMap = new Map<string, MaintenanceTask>();
+  allTasks.forEach(t => taskMap.set(t.id, t));
+  
+  const previousUnscheduledIds = new Set<string>();
+  previousUnscheduledTasks.forEach(t => {
+    previousUnscheduledIds.add(t.id);
+    if (!taskMap.has(t.id)) {
+      taskMap.set(t.id, t);
+    }
+  });
+  
+  const mergedTasks = Array.from(taskMap.values());
+
   // If Pareto Multi-Objective Solver is explicitly requested
   if (solverType === 'PARETO_MULTI_OBJECTIVE') {
     const horizonDays = horizon === 'DAILY' ? 1 : horizon === 'WEEKLY' ? 7 : 30;
-    let filteredTasks = [...allTasks];
+    let filteredTasks = [...mergedTasks];
     if (scopeLevel === 'ZONE' && selectedZone !== 'ALL') {
       filteredTasks = filteredTasks.filter(t => t.zoneCode === selectedZone);
     } else if (scopeLevel === 'DIVISION' && selectedDivision !== 'ALL') {
@@ -56,7 +73,7 @@ export function generateOptimizedBlocks(
   }
 
   // 1. Filter tasks by Geographic Scope (National / Zone / Division)
-  let filteredTasks = [...allTasks];
+  let filteredTasks = [...mergedTasks];
 
   if (scopeLevel === 'ZONE' && selectedZone !== 'ALL') {
     filteredTasks = filteredTasks.filter(t => t.zoneCode === selectedZone);
@@ -67,11 +84,26 @@ export function generateOptimizedBlocks(
   // 2. Compute AI Track Criticality Index (TCI 2.0) for each task using calibrated ML model
   const scoredTasks = filteredTasks.map(t => {
     const matchedSection = corridorSections.find(s => s.id === t.sectionId || s.name === t.sectionName);
+    const wasUnscheduled = previousUnscheduledIds.has(t.id);
     return {
       ...t,
-      criticalityScore: calculateMLCriticality(t, matchedSection),
+      criticalityScore: calculateTaskCriticality(t, matchedSection, wasUnscheduled ? 1 : 0),
     };
   }).sort((a, b) => b.criticalityScore - a.criticalityScore);
+
+  // 2.5 Respect Dependency Ordering
+  const graph = new DependencyGraph(scoredTasks);
+  if (graph.hasCycles()) {
+    throw new Error("Task dependencies have cycles");
+  }
+  const topoSortedIds = graph.getTopologicalSort();
+  // Sort primarily by topological order, then by criticality
+  scoredTasks.sort((a, b) => {
+    const idxA = topoSortedIds.indexOf(a.id);
+    const idxB = topoSortedIds.indexOf(b.id);
+    if (idxA !== idxB) return idxA - idxB;
+    return b.criticalityScore - a.criticalityScore;
+  });
 
   // 3. Partition tasks by corridor section
   const sectionGroups: Record<string, typeof scoredTasks> = {};
@@ -146,11 +178,31 @@ export function generateOptimizedBlocks(
 
       let scheduled = false;
 
+      // Crew shift constraint
+      if (shadowBlockDuration > 8) {
+         // Break or skip if it requires more than 8 continuous hours without shift change (simplification)
+         cluster.forEach(t => unscheduledTasks.push(t));
+         return; // Skip scheduling this cluster entirely as it exceeds 8h
+      }
+
+      const RAILWAY_HOLIDAYS = ['2026-01-26', '2026-08-15', '2026-10-02', '2026-11-12']; // Example major holidays
+
       // Iterate through each date in the planning horizon
       for (let dayOffset = 0; dayOffset < horizonDays; dayOffset++) {
         const currentDate = new Date(baseStartDate);
         currentDate.setDate(baseStartDate.getDate() + dayOffset);
         const dateStr = currentDate.toISOString().split('T')[0];
+        
+        const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+        const isHoliday = RAILWAY_HOLIDAYS.includes(dateStr);
+
+        // Weather constraint: Monsoon season (June-Sept). Defer non-critical routine TRD outdoor work during monsoon.
+        const month = currentDate.getMonth() + 1; // 1-12
+        const isMonsoon = month >= 6 && month <= 9;
+        const isNonCriticalTRD = depts.includes('TRD') && !cluster.some(t => t.severity === 'CRITICAL');
+        if (isMonsoon && isNonCriticalTRD) {
+          continue; // Skip non-critical TRD on this date due to monsoon precaution
+        }
 
         // Sweep available headway windows on this date
         const headwayWindows = findWindowsForDate(sectionId, dateStr, trainMovements);

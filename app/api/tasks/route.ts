@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { taskStore } from '@/app/lib/taskStore';
 import type { MaintenanceTask } from '@/app/lib/types';
 import { calculateMLCriticality } from '@/app/lib/mlEngine';
-import { INITIAL_CORRIDOR_SECTIONS } from '@/app/lib/mockData';
+import { referenceRepo } from '@/app/lib/repositories';
 import { taskSchema } from '@/app/lib/validation';
 import { requireRole, isWithinScope, logAudit } from '@/app/lib/auth';
 
@@ -70,7 +70,8 @@ export async function POST(request: NextRequest) {
     status: data.status ?? 'PENDING',
   };
 
-  const matchedSection = INITIAL_CORRIDOR_SECTIONS.find(s => s.id === newTask.sectionId || s.name === newTask.sectionName);
+  const sections = referenceRepo.sections();
+  const matchedSection = sections.find(s => s.id === newTask.sectionId || s.name === newTask.sectionName);
   newTask.criticalityScore = calculateMLCriticality(newTask, matchedSection);
 
   taskStore.add(newTask);

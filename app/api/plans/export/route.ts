@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
     const division = searchParams.get('division') || 'ALL';
 
     const dbTasks = taskStore.getAll();
-    const tasks = dbTasks.length > 0 ? dbTasks : INITIAL_MAINTENANCE_TASKS;
-    const sections = referenceRepo.sections().length > 0 ? referenceRepo.sections() : INITIAL_CORRIDOR_SECTIONS;
-    const trainMovements = referenceRepo.trainMovements().length > 0 ? referenceRepo.trainMovements() : INITIAL_TRAIN_MOVEMENTS;
+    const tasks = dbTasks;
+    const sections = referenceRepo.sections();
+    const trainMovements = referenceRepo.trainMovements();
 
     const optResult = generateOptimizedBlocks(
       tasks,

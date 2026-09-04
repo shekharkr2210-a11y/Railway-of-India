@@ -85,7 +85,12 @@ export function computeOptimizationMetrics(
     // If block is clash-free (trainImpactMinutes == 0), train delays prevented equals the sum of potential delay risk
     if (b.trainImpactMinutes === 0) {
       // 15 mins saved per co-located task vs individual dispatch
-      trainDelaysPreventedMinutes += Math.max(15, b.taskIds.length * 20);
+      const sumSpeedImpact = tasks
+        .filter(t => b.taskIds.includes(t.id))
+        .reduce((sum, t) => sum + (t.speedRestrictionImpactKmvh || 0), 0);
+      
+      // Calculate prevented delay based on speed restrictions and number of tasks
+      trainDelaysPreventedMinutes += Math.max(15, (b.taskIds.length * 10) + (sumSpeedImpact * 2));
     }
   });
 
@@ -101,6 +106,9 @@ export function computeOptimizationMetrics(
     totalBlockHoursRequested
   );
 
+  const activeZonesCount = new Set(tasks.map(t => t.zoneCode)).size || 1;
+  const activeDivisionsCount = new Set(tasks.map(t => t.divisionCode)).size || 1;
+
   return {
     totalDefects,
     criticalTasksCount,
@@ -110,8 +118,8 @@ export function computeOptimizationMetrics(
     downtimeHoursSaved: parseFloat(downtimeHoursSaved.toFixed(1)),
     shadowBlockEfficiency,
     trainDelaysPreventedMinutes,
-    activeZonesCount: scopeLevel === 'NATIONAL' ? 18 : 1,
-    activeDivisionsCount: scopeLevel === 'NATIONAL' ? 68 : scopeLevel === 'ZONE' ? 4 : 1,
+    activeZonesCount,
+    activeDivisionsCount,
     crossZonalConflictsResolved,
   };
 }

@@ -1,7 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { taskStore } from '@/app/lib/taskStore';
 import { referenceRepo } from '@/app/lib/repositories';
-import { INITIAL_MAINTENANCE_TASKS, INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS } from '@/app/lib/mockData';
 import { generateOptimizedBlocks } from '@/app/lib/optimizer';
 import { ScopeLevel, MaintenanceTask } from '@/app/lib/types';
 import { sanitizeInput } from '@/app/lib/security';
@@ -30,15 +29,21 @@ export async function POST(request: NextRequest) {
     if (body.tasks && Array.isArray(body.tasks) && body.tasks.length > 0) {
       tasks = body.tasks;
     } else {
-      const dbTasks = taskStore.getByFilter({
+      tasks = taskStore.getByFilter({
         zone: scope === 'ZONE' ? zone : undefined,
         division: scope === 'DIVISION' ? division : undefined,
       });
-      tasks = dbTasks.length > 0 ? dbTasks : INITIAL_MAINTENANCE_TASKS;
+      if (tasks.length === 0) {
+        return NextResponse.json({ success: false, error: 'No tasks found. Please import data first.' }, { status: 400 });
+      }
     }
 
-    const sections = referenceRepo.sections().length > 0 ? referenceRepo.sections() : INITIAL_CORRIDOR_SECTIONS;
-    const trainMovements = referenceRepo.trainMovements().length > 0 ? referenceRepo.trainMovements() : INITIAL_TRAIN_MOVEMENTS;
+    const sections = referenceRepo.sections();
+    if (sections.length === 0) {
+      return NextResponse.json({ success: false, error: 'No corridor sections found. Please import reference data.' }, { status: 400 });
+    }
+
+    const trainMovements = referenceRepo.trainMovements();
 
     // Run AI-powered server-side optimization algorithm with timetable constraints
     const result = generateOptimizedBlocks(

@@ -31,7 +31,7 @@ export function MachineUtilizationPanel({ blocks, tasks, horizon }: MachineUtili
   const horizonDays = horizon === 'DAILY' ? 1 : horizon === 'WEEKLY' ? 7 : 30;
 
   const fleetStats = useMemo(() => {
-    return calculateFleetUtilization(blocks, horizonDays);
+    return calculateFleetUtilization(blocks, [], horizonDays);
   }, [blocks, horizonDays]);
 
   const crewAssignments = useMemo(() => {

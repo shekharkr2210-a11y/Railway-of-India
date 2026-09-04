@@ -1,3 +1,4 @@
+import { parseCSV } from '../csvParser';
 import { MaintenanceTask, TrainMovement } from '../types';
 import { SourceAdapter } from './types';
 
@@ -75,5 +76,26 @@ export const coaAdapter: SourceAdapter = {
       criticalityScore: 30,
       status: 'PENDING',
     };
+  },
+
+  parseFromCSV(csvContent: string): TrainMovement[] {
+    const parsed = parseCSV<TrainMovement>(csvContent, {
+      columnMapping: {
+        train_number: 'trainNumber',
+        train_name: 'trainName',
+        type: 'type',
+        section_id: 'sectionId',
+        origin_zone: 'originZone',
+        destination_zone: 'destinationZone',
+        entry_time: 'entryTime',
+        exit_time: 'exitTime',
+        priority: 'priority'
+      },
+      transform: (row) => ({
+        id: `TRN-${row.trainNumber || Math.floor(Math.random() * 10000)}-${Date.now()}`,
+        priority: parseInt(row.priority as string, 10) || 1
+      })
+    });
+    return parsed.data;
   },
 };

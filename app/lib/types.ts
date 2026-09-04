@@ -183,6 +183,7 @@ export interface MaintenanceTask {
   assignedMachine?: string;
   assignedMachineType?: TrackMachineType;
   status: 'PENDING' | 'SCHEDULED' | 'APPROVED' | 'IN_PROGRESS' | 'COMPLETED';
+  dependsOn?: string[];
 }
 
 export interface CorridorSection {

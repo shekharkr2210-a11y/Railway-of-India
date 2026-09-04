@@ -11,6 +11,7 @@ import { ShadowBlockShowcase } from './components/ShadowBlockShowcase';
 import { TaskPriorityTable } from './components/TaskPriorityTable';
 import { BDMSWorkflow } from './components/BDMSWorkflow';
 import { DataIngestionPanel } from './components/DataIngestionPanel';
+import { DataUploadPanel } from './components/DataUploadPanel';
 import { PendingWorksReport } from './components/PendingWorksReport';
 import { PreventiveMaintenancePanel } from './components/PreventiveMaintenancePanel';
 import { WhatIfSimulator } from './components/WhatIfSimulator';
@@ -36,7 +37,7 @@ export default function Home() {
   const [loggedInUser, setLoggedInUser] = useState<string>('Railway Board HQ');
   const [horizon, setHorizon] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [activeTab, setActiveTab] = useState<
-    'NATIONAL' | 'OVERVIEW' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW'
+    'NATIONAL' | 'OVERVIEW' | 'CORRIDOR' | 'TASKS' | 'PENDING_WORKS' | 'BDMS' | 'INGESTION' | 'DATA_IMPORT' | 'PM_CYCLES' | 'AI_MODEL' | 'FLEET_CREW'
   >('NATIONAL');
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
@@ -115,7 +116,7 @@ export default function Home() {
       }
     } catch {
       // Fallback local optimization if offline
-      const result = generateOptimizedBlocks(currentTasks, currentHorizon, currentScope, currentZone, currentDivision);
+      const result = generateOptimizedBlocks(currentTasks, currentHorizon, currentScope, currentZone, currentDivision, INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS);
       setBlocks(result.blocks);
       setMetrics(result.metrics);
     } finally {
@@ -136,7 +137,7 @@ export default function Home() {
         }
       } catch {
         if (active) {
-          const result = generateOptimizedBlocks(tasks, horizon, scopeLevel, selectedZone, selectedDivision);
+          const result = generateOptimizedBlocks(tasks, horizon, scopeLevel, selectedZone, selectedDivision, INITIAL_CORRIDOR_SECTIONS, INITIAL_TRAIN_MOVEMENTS);
           setBlocks(result.blocks);
           setMetrics(result.metrics);
         }
@@ -386,6 +387,12 @@ export default function Home() {
         {activeTab === 'INGESTION' && (
           <div>
             <DataIngestionPanel onTasksImported={handleTasksImported} />
+          </div>
+        )}
+
+        {activeTab === 'DATA_IMPORT' && (
+          <div>
+            <DataUploadPanel onSuccess={() => setToastMessage('Data successfully imported!')} />
           </div>
         )}
 

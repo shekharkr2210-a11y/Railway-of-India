@@ -75,7 +75,7 @@ export function runMigrations(db: DatabaseInstance): void {
   if (!applied.has('0001-initial-schema')) {
     db.transaction(() => {
       db.exec(sql);
-      db.prepare('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(
+      db.prepare('INSERT OR IGNORE INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(
         '0001-initial-schema',
         new Date().toISOString()
       );
@@ -96,8 +96,58 @@ export function runMigrations(db: DatabaseInstance): void {
         );
         CREATE INDEX IF NOT EXISTS idx_syncs_source ON source_syncs(source_system);
       `);
-      db.prepare('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(
+      db.prepare('INSERT OR IGNORE INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(
         '0002-source-syncs-and-freight',
+        new Date().toISOString()
+      );
+    })();
+  }
+
+  if (!applied.has('0003-plans-table')) {
+    db.transaction(() => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS plans (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          horizon TEXT NOT NULL,
+          scope_level TEXT NOT NULL,
+          zone_code TEXT,
+          division_code TEXT,
+          status TEXT NOT NULL DEFAULT 'DRAFT',
+          version INTEGER NOT NULL DEFAULT 1,
+          parent_plan_id TEXT,
+          blocks_json TEXT NOT NULL,
+          metrics_json TEXT NOT NULL,
+          recommendations_json TEXT,
+          unscheduled_tasks_json TEXT,
+          created_by TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+      `);
+      db.prepare('INSERT OR IGNORE INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(
+        '0003-plans-table',
+        new Date().toISOString()
+      );
+    })();
+  }
+
+  if (!applied.has('0004-notifications')) {
+    db.transaction(() => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS notifications (
+          id TEXT PRIMARY KEY,
+          user_id TEXT,
+          type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          message TEXT NOT NULL,
+          is_read INTEGER DEFAULT 0,
+          created_at TEXT NOT NULL,
+          related_entity_id TEXT
+        );
+      `);
+      db.prepare('INSERT OR IGNORE INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(
+        '0004-notifications',
         new Date().toISOString()
       );
     })();

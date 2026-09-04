@@ -1,87 +1,87 @@
 {
-  "model_name": "Indian Railways TCI Gradient-Calibrated Prioritizer v2.4",
-  "version": "2.4.0",
-  "trained_at": "2026-09-01T17:30:00Z",
-  "training_dataset_size": 1800,
-  "test_dataset_size": 600,
+  "model_name": "Indian Railways TCI Gradient-Calibrated Prioritizer v2.4 (ML)",
+  "version": "2.5.0",
+  "trained_at": "2026-09-04T17:30:00Z",
+  "training_dataset_size": 4000,
+  "test_dataset_size": 1000,
   "metrics": {
-    "accuracy": 0.9317,
-    "roc_auc": 0.9792,
-    "f1_score": 0.9563,
-    "precision": 0.9277,
-    "recall": 0.9868,
+    "accuracy": 0.936,
+    "roc_auc": 0.9711,
+    "f1_score": 0.9643,
+    "precision": 0.9412,
+    "recall": 0.9886,
     "confusion_matrix": {
-      "true_positives": 449,
-      "false_positives": 35,
-      "true_negatives": 110,
-      "false_negatives": 6
+      "true_positives": 865,
+      "false_positives": 54,
+      "true_negatives": 71,
+      "false_negatives": 10
     }
   },
   "weights": [
-    6.1424,
-    5.9845,
-    4.7627,
-    4.4936,
-    0.6667
+    9.5642,
+    7.6045,
+    5.6657,
+    5.77,
+    1.4064
   ],
-  "bias": -8.9503,
+  "bias": -11.1374,
   "feature_importances": [
     {
-      "feature": "Severity Level (Weight)",
-      "importance": 27.9,
-      "weight": 6.1424
+      "feature": "Speed Restriction Impact (TSR)",
+      "importance": 33.1,
+      "weight": 5.6657
     },
     {
       "feature": "Exponential Overdue Decay",
-      "importance": 27.1,
-      "weight": 5.9845
+      "importance": 31.0,
+      "weight": 7.6045
     },
     {
-      "feature": "Speed Restriction Impact (TSR)",
-      "importance": 21.6,
-      "weight": 4.7627
+      "feature": "Severity Level (Weight)",
+      "importance": 21.7,
+      "weight": 9.5642
     },
     {
       "feature": "Corridor Traffic Density Multiplier",
-      "importance": 20.4,
-      "weight": 4.4936
+      "importance": 10.7,
+      "weight": 5.77
     },
     {
       "feature": "25kV OHE Power Block Isolation",
-      "importance": 3.0,
-      "weight": 0.6667
+      "importance": 3.5,
+      "weight": 1.4064
     }
   ],
   "calibration_bins": [
     {
       "bin": "0.0 - 0.2",
-      "expected": 0.08,
-      "observed": 0.082,
-      "confidence": 0.94
+      "expected": 0.064,
+      "observed": 0.033,
+      "confidence": 0.968
     },
     {
       "bin": "0.2 - 0.4",
-      "expected": 0.28,
-      "observed": 0.285,
-      "confidence": 0.93
+      "expected": 0.315,
+      "observed": 0.357,
+      "confidence": 0.958
     },
     {
       "bin": "0.4 - 0.6",
-      "expected": 0.51,
-      "observed": 0.505,
-      "confidence": 0.91
+      "expected": 0.533,
+      "observed": 0.548,
+      "confidence": 0.986
     },
     {
       "bin": "0.6 - 0.8",
-      "expected": 0.72,
-      "observed": 0.718,
-      "confidence": 0.95
+      "expected": 0.686,
+      "observed": 0.609,
+      "confidence": 0.923
     },
     {
       "bin": "0.8 - 1.0",
-      "expected": 0.94,
-      "observed": 0.942,
-      "confidence": 0.97
+      "expected": 0.984,
+      "observed": 0.976,
+      "confidence": 0.992
     }
   ]
 }

@@ -25,6 +25,7 @@ export interface SourceAdapter {
     trains?: TrainMovement[];
   }>;
   mapToCanonicalTask(raw: Partial<MaintenanceTask>): MaintenanceTask;
+  parseFromCSV?(csvContent: string): MaintenanceTask[] | TrainMovement[];
 }
 
 export interface SyncLogEntry {

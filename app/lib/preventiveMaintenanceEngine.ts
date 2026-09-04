@@ -175,9 +175,16 @@ export function generatePreventiveMaintenanceSchedule(
         lastPerformed = new Date(today);
         lastPerformed.setDate(today.getDate() - cycle.frequencyDays + mostRecentTask.overdueDays);
       } else {
-        // No matching task — simulate random past performance
+        // No matching task — use deterministic hash based past performance
         lastPerformed = new Date(today);
-        const randomDaysAgo = Math.floor(cycle.frequencyDays * (0.6 + Math.random() * 0.6));
+        const hashStr = section.id + cycle.activity;
+        let hash = 0;
+        for (let i = 0; i < hashStr.length; i++) {
+          hash = Math.imul(31, hash) + hashStr.charCodeAt(i) | 0;
+        }
+        const pseudoRandom = Math.abs(hash) % 1000 / 1000;
+        
+        const randomDaysAgo = Math.floor(cycle.frequencyDays * (0.6 + pseudoRandom * 0.6));
         lastPerformed.setDate(today.getDate() - randomDaysAgo);
       }
 
