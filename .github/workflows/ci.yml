@@ -24,6 +24,17 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+        continue-on-error: true
+
+      - name: Install Python Dependencies
+        run: pip install -r requirements.txt
+        continue-on-error: true
+
       - name: Run ML Model Prioritizer Trainer
         run: python scripts/train_model.py
 

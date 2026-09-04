@@ -1,5 +1,5 @@
 {
-  "model_name": "Indian Railways TCI Gradient-Calibrated Prioritizer v2.4 (ML)",
+  "model_name": "Indian Railways TCI Gradient-Calibrated Prioritizer v2.5 (Scikit-Learn)",
   "version": "2.5.0",
   "trained_at": "2026-09-04T17:30:00Z",
   "training_dataset_size": 4000,
